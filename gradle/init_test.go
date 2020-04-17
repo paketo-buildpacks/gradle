@@ -14,13 +14,22 @@
  * limitations under the License.
  */
 
-package main
+package gradle_test
 
 import (
-	"github.com/paketo-buildpacks/gradle/gradle"
-	"github.com/paketo-buildpacks/libpak"
+	"testing"
+
+	"github.com/sclevine/spec"
+	"github.com/sclevine/spec/report"
 )
 
-func main() {
-	libpak.Detect(gradle.Detect{})
+func TestUnit(t *testing.T) {
+	suite := spec.New("gradle", spec.Report(report.Terminal{}))
+	suite("Application", testApplication)
+	suite("Build", testBuild)
+	suite("Cache", testCache)
+	suite("Detect", testDetect)
+	suite("Distribution", testDistribution)
+	suite.Run(t)
 }
+

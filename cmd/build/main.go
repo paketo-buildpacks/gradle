@@ -16,5 +16,14 @@
 
 package main
 
+import (
+	"os"
+
+	"github.com/paketo-buildpacks/gradle/gradle"
+	"github.com/paketo-buildpacks/libpak"
+	"github.com/paketo-buildpacks/libpak/bard"
+)
+
 func main() {
+	libpak.Build(gradle.Build{Logger: bard.NewLogger(os.Stdout)})
 }
