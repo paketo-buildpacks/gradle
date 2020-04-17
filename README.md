@@ -15,7 +15,7 @@ The buildpack will do the following:
   * Runs `<APPLICATION_ROOT>/gradlew --no-daemon -x test build` to build the application
 * If `<APPLICATION_ROOT>/gradlew` does not exist
   * Contributes Gradle to a layer with all commands on `$PATH`
-  * Runs `<GRADLE_ROOT>/gradle -x test build` to build the application
+  * Runs `<GRADLE_ROOT>/bin/gradle -x test build` to build the application
 * Removes the source code in `<APPLICATION_ROOT>`
 * Expands `<APPLICATION_ROOT>/build/libs/*.[jw]ar` to `<APPLICATION_ROOT>`
 
@@ -24,7 +24,7 @@ The buildpack will do the following:
 | -------------------- | -----------
 | `$BP_GRADLE_BUILD_ARGUMENTS` | Configure the arguments to pass to build system.  Defaults to `--no-daemon -x test build`.
 | `$BP_GRADLE_BUILT_MODULE` | Configure the module to find application artifact in.  Defaults to the root module (empty).
-| `$BP_GRADLE_BUILT_ARTIFACT` | Configure the built application artifact explicitly.  Supersedes `$BP_BUILT_MODULE`  Defaults to `build/libs/*.[jw]ar`.
+| `$BP_GRADLE_BUILT_ARTIFACT` | Configure the built application artifact explicitly.  Supersedes `$BP_GRADLE_BUILT_MODULE`  Defaults to `build/libs/*.[jw]ar`.
 
 ## License
 This buildpack is released under version 2.0 of the [Apache License][a].
