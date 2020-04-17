@@ -26,7 +26,7 @@ import (
 
 type Detect struct{}
 
-func (d Detect) Detect(context libcnb.DetectContext) (libcnb.DetectResult, error) {
+func (Detect) Detect(context libcnb.DetectContext) (libcnb.DetectResult, error) {
 	files := []string{
 		filepath.Join(context.Application.Path, "build.gradle"),
 		filepath.Join(context.Application.Path, "build.gradle.kts"),
