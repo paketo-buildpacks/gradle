@@ -65,7 +65,7 @@ func (b Build) Build(context libcnb.BuildContext) (libcnb.BuildResult, error) {
 	c.Logger = b.Logger
 	result.Layers = append(result.Layers, c)
 
-	a, err := NewApplication(context.Application.Path, command)
+	a, err := NewApplication(context.Application.Path, c.Path, command, result.Plan)
 	if err != nil {
 		return libcnb.BuildResult{}, fmt.Errorf("unable to create application layer\n%w", err)
 	}
