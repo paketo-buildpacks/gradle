@@ -49,7 +49,7 @@ func (b Build) Build(context libcnb.BuildContext) (libcnb.BuildResult, error) {
 			return libcnb.BuildResult{}, fmt.Errorf("unable to find dependency\n%w", err)
 		}
 
-		d := NewDistribution(dep, dc, &context.Plan)
+		d := NewDistribution(dep, dc, &result.Plan)
 		d.Logger = b.Logger
 		result.Layers = append(result.Layers, d)
 

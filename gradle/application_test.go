@@ -94,7 +94,7 @@ func testApplication(t *testing.T, context spec.G, it spec.S) {
 		Expect(e.Stderr).NotTo(BeNil())
 
 		Expect(filepath.Join(layer.Path, "application.zip")).To(BeARegularFile())
-		Expect(filepath.Join(ctx.Application.Path, "stub-application.jar")).NotTo(BeAnExistingFile())
+		Expect(filepath.Join(ctx.Application.Path, "build", "libs", "stub-application.jar")).NotTo(BeAnExistingFile())
 		Expect(filepath.Join(ctx.Application.Path, "fixture-marker")).To(BeARegularFile())
 	})
 
