@@ -25,6 +25,7 @@ import (
 	"github.com/buildpacks/libcnb"
 	. "github.com/onsi/gomega"
 	"github.com/paketo-buildpacks/gradle/gradle"
+	"github.com/paketo-buildpacks/libbs"
 	"github.com/sclevine/spec"
 )
 
@@ -60,7 +61,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		Expect(result.Layers).To(HaveLen(2))
 		Expect(result.Layers[0].Name()).To(Equal("cache"))
 		Expect(result.Layers[1].Name()).To(Equal("application"))
-		Expect(result.Layers[1].(gradle.Application).Command).To(Equal(filepath.Join(ctx.Application.Path, "gradlew")))
+		Expect(result.Layers[1].(libbs.Application).Command).To(Equal(filepath.Join(ctx.Application.Path, "gradlew")))
 	})
 
 	it("contributes distribution", func() {
@@ -82,7 +83,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		Expect(result.Layers[0].Name()).To(Equal("gradle"))
 		Expect(result.Layers[1].Name()).To(Equal("cache"))
 		Expect(result.Layers[2].Name()).To(Equal("application"))
-		Expect(result.Layers[2].(gradle.Application).Command).To(Equal(filepath.Join(ctx.Layers.Path, "gradle", "bin", "gradle")))
+		Expect(result.Layers[2].(libbs.Application).Command).To(Equal(filepath.Join(ctx.Layers.Path, "gradle", "bin", "gradle")))
 	})
 
 }
