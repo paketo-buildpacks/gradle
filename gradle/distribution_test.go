@@ -61,7 +61,6 @@ func testDistribution(t *testing.T, context spec.G, it spec.S) {
 		layer, err = d.Contribute(layer)
 		Expect(err).NotTo(HaveOccurred())
 
-		Expect(layer.Build).To(BeTrue())
 		Expect(layer.Cache).To(BeTrue())
 		Expect(filepath.Join(layer.Path, "fixture-marker")).To(BeARegularFile())
 	})

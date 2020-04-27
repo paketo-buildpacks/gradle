@@ -44,7 +44,6 @@ func (d Distribution) Contribute(layer libcnb.Layer) (libcnb.Layer, error) {
 			return libcnb.Layer{}, fmt.Errorf("unable to expand Gradle\n%w", err)
 		}
 
-		layer.Build = true
 		layer.Cache = true
 		return layer, nil
 	})
