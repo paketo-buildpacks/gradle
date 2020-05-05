@@ -29,9 +29,9 @@ id = "org.cloudfoundry.stacks.cflinuxfs3"
 [[metadata.dependencies]]
 id      = "gradle"
 name    = "Gradle"
-version = "6.3"
-uri     = "https://downloads.gradle.org/distributions/gradle-6.3-bin.zip"
-sha256  = "038794feef1f4745c6347107b6726279d1c824f3fc634b60f86ace1e9fbd1768"
+version = "6.4"
+uri     = "https://downloads.gradle.org/distributions/gradle-6.4-bin.zip"
+sha256  = "b888659f637887e759749f6226ddfcb1cb04f828c58c41279de73c463fdbacc9"
 stacks  = [ "io.buildpacks.stacks.bionic", "org.cloudfoundry.stacks.cflinuxfs3" ]
 
   [[metadata.dependencies.licenses]]
