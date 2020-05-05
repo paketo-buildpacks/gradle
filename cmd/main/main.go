@@ -17,10 +17,16 @@
 package main
 
 import (
+	"os"
+
 	"github.com/paketo-buildpacks/gradle/gradle"
 	"github.com/paketo-buildpacks/libpak"
+	"github.com/paketo-buildpacks/libpak/bard"
 )
 
 func main() {
-	libpak.Detect(gradle.Detect{})
+	libpak.Main(
+		gradle.Detect{},
+		gradle.Build{Logger: bard.NewLogger(os.Stdout)},
+	)
 }

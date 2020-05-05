@@ -7,5 +7,6 @@ if [[ -d ../go-cache ]]; then
   export GOPATH
 fi
 
-GOOS="linux" go build -ldflags='-s -w' -tags osusergo -o bin/build github.com/paketo-buildpacks/gradle/cmd/build
-GOOS="linux" go build -ldflags='-s -w' -tags osusergo -o bin/detect github.com/paketo-buildpacks/gradle/cmd/detect
+GOOS="linux" go build -ldflags='-s -w' -tags osusergo -o bin/main github.com/paketo-buildpacks/gradle/cmd/main
+ln -fs main bin/build
+ln -fs main bin/detect
