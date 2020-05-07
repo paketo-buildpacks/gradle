@@ -36,6 +36,11 @@ func (b Build) Build(context libcnb.BuildContext) (libcnb.BuildResult, error) {
 	b.Logger.Title(context.Buildpack)
 	result := libcnb.NewBuildResult()
 
+	cr, err := libpak.NewConfigurationResolver(context.Buildpack, &b.Logger)
+	if err != nil {
+		return libcnb.BuildResult{}, fmt.Errorf("unable to create configuration resolver\n%w", err)
+	}
+
 	dr, err := libpak.NewDependencyResolver(context)
 	if err != nil {
 		return libcnb.BuildResult{}, fmt.Errorf("unable to create dependency resolver\n%w", err)
@@ -68,12 +73,19 @@ func (b Build) Build(context libcnb.BuildContext) (libcnb.BuildResult, error) {
 	c.Logger = b.Logger
 	result.Layers = append(result.Layers, c)
 
-	arg := libbs.NewArgumentResolver("BP_GRADLE_BUILD_ARGUMENTS", []string{"--no-daemon", "-x", "test", "build"}, b.Logger)
+	args, err := libbs.ResolveArguments("BP_GRADLE_BUILD_ARGUMENTS", cr)
+	if err != nil {
+		return libcnb.BuildResult{}, fmt.Errorf("unable to resolve build arguments\n%w", err)
+	}
 
-	art := libbs.NewArtifactResolver("BP_GRADLE_BUILT_ARTIFACT", "BP_GRADLE_BUILT_MODULE", filepath.Join("build", "libs", "*.[jw]ar"), b.Logger)
-	art.InterestingFileDetector = libbs.JARInterestingFileDetector{}
+	art := libbs.ArtifactResolver{
+		ArtifactConfigurationKey: "BP_GRADLE_BUILT_ARTIFACT",
+		ConfigurationResolver:    cr,
+		ModuleConfigurationKey:   "BP_GRADLE_BUILT_MODULE",
+		InterestingFileDetector:  libbs.JARInterestingFileDetector{},
+	}
 
-	a, err := libbs.NewApplication(context.Application.Path, arg, art, c, command, result.Plan)
+	a, err := libbs.NewApplication(context.Application.Path, args, art, c, command, result.Plan)
 	if err != nil {
 		return libcnb.BuildResult{}, fmt.Errorf("unable to create application layer\n%w", err)
 	}
