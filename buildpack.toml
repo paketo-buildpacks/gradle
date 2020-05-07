@@ -33,7 +33,7 @@ default     = "--no-daemon -x test build"
 
 [[metadata.configurations]]
 name        = "BP_GRADLE_BUILT_ARTIFACT"
-description = "the built application artifact explicitly.  Supersedes $BP_MAVEN_BUILT_MODULE"
+description = "the built application artifact explicitly.  Supersedes $BP_GRADLE_BUILT_MODULE"
 default     = "build/libs/*.[jw]ar"
 
 [[metadata.configurations]]
