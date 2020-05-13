@@ -52,4 +52,3 @@ func (d Distribution) Contribute(layer libcnb.Layer) (libcnb.Layer, error) {
 func (Distribution) Name() string {
 	return "gradle"
 }
-
