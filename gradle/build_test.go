@@ -24,16 +24,18 @@ import (
 
 	"github.com/buildpacks/libcnb"
 	. "github.com/onsi/gomega"
+	"github.com/sclevine/spec"
+
 	"github.com/paketo-buildpacks/gradle/gradle"
 	"github.com/paketo-buildpacks/libbs"
-	"github.com/sclevine/spec"
 )
 
 func testBuild(t *testing.T, context spec.G, it spec.S) {
 	var (
 		Expect = NewWithT(t).Expect
 
-		ctx libcnb.BuildContext
+		ctx         libcnb.BuildContext
+		gradleBuild gradle.Build
 	)
 
 	it.Before(func() {
@@ -44,6 +46,10 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 
 		ctx.Layers.Path, err = ioutil.TempDir("", "build-layers")
 		Expect(err).NotTo(HaveOccurred())
+
+		gradleBuild = gradle.Build{
+			ApplicationFactory: &FakeApplicationFactory{},
+		}
 	})
 
 	it.After(func() {
@@ -55,7 +61,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		Expect(ioutil.WriteFile(filepath.Join(ctx.Application.Path, "gradlew"), []byte{}, 0644)).To(Succeed())
 		ctx.StackID = "test-stack-id"
 
-		result, err := gradle.Build{}.Build(ctx)
+		result, err := gradleBuild.Build(ctx)
 		Expect(err).NotTo(HaveOccurred())
 
 		Expect(result.Layers).To(HaveLen(2))
@@ -76,7 +82,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		}
 		ctx.StackID = "test-stack-id"
 
-		result, err := gradle.Build{}.Build(ctx)
+		result, err := gradleBuild.Build(ctx)
 		Expect(err).NotTo(HaveOccurred())
 
 		Expect(result.Layers).To(HaveLen(3))
@@ -85,5 +91,18 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		Expect(result.Layers[2].Name()).To(Equal("application"))
 		Expect(result.Layers[2].(libbs.Application).Command).To(Equal(filepath.Join(ctx.Layers.Path, "gradle", "bin", "gradle")))
 	})
+}
 
+type FakeApplicationFactory struct{}
+
+func (f *FakeApplicationFactory) NewApplication(
+	_ map[string]interface{},
+	_ []string,
+	_ libbs.ArtifactResolver,
+	_ libbs.Cache,
+	command string,
+	_ *libcnb.BuildpackPlan,
+	_ string,
+) (libbs.Application, error) {
+	return libbs.Application{Command: command}, nil
 }

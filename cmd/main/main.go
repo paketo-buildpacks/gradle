@@ -20,6 +20,7 @@ import (
 	"os"
 
 	"github.com/paketo-buildpacks/gradle/gradle"
+	"github.com/paketo-buildpacks/libbs"
 	"github.com/paketo-buildpacks/libpak"
 	"github.com/paketo-buildpacks/libpak/bard"
 )
@@ -27,6 +28,9 @@ import (
 func main() {
 	libpak.Main(
 		gradle.Detect{},
-		gradle.Build{Logger: bard.NewLogger(os.Stdout)},
+		gradle.Build{
+			ApplicationFactory: libbs.NewApplicationFactory(),
+			Logger:             bard.NewLogger(os.Stdout),
+		},
 	)
 }

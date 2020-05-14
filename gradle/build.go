@@ -29,7 +29,13 @@ import (
 )
 
 type Build struct {
-	Logger bard.Logger
+	Logger             bard.Logger
+	ApplicationFactory ApplicationFactory
+}
+
+type ApplicationFactory interface {
+	NewApplication(additionalMetadata map[string]interface{}, arguments []string, artifactResolver libbs.ArtifactResolver,
+		cache libbs.Cache, command string, plan *libcnb.BuildpackPlan, applicationPath string) (libbs.Application, error)
 }
 
 func (b Build) Build(context libcnb.BuildContext) (libcnb.BuildResult, error) {
@@ -85,7 +91,7 @@ func (b Build) Build(context libcnb.BuildContext) (libcnb.BuildResult, error) {
 		InterestingFileDetector:  libbs.JARInterestingFileDetector{},
 	}
 
-	a, err := libbs.NewApplication(
+	a, err := b.ApplicationFactory.NewApplication(
 		map[string]interface{}{},
 		args,
 		art,
