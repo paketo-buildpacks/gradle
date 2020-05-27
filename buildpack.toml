@@ -30,15 +30,18 @@ id = "org.cloudfoundry.stacks.cflinuxfs3"
 name        = "BP_GRADLE_BUILD_ARGUMENTS"
 description = "the arguments to pass to Maven"
 default     = "--no-daemon -x test build"
+build       = true
 
 [[metadata.configurations]]
 name        = "BP_GRADLE_BUILT_ARTIFACT"
 description = "the built application artifact explicitly.  Supersedes $BP_GRADLE_BUILT_MODULE"
 default     = "build/libs/*.[jw]ar"
+build       = true
 
 [[metadata.configurations]]
 name        = "BP_GRADLE_BUILT_MODULE"
 description = "the module to find application artifact in"
+build       = true
 
 [[metadata.dependencies]]
 id      = "gradle"
