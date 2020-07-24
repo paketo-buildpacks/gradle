@@ -26,6 +26,14 @@ The buildpack will do the following:
 | `$BP_GRADLE_BUILT_MODULE` | Configure the module to find application artifact in.  Defaults to the root module (empty).
 | `$BP_GRADLE_BUILT_ARTIFACT` | Configure the built application artifact explicitly.  Supersedes `$BP_GRADLE_BUILT_MODULE`  Defaults to `build/libs/*.[jw]ar`.
 
+## Bindings
+The buildpack optionally accepts the following bindings:
+
+### Type: `dependency-mapping`
+|Key                   | Value   | Description
+|----------------------|---------|------------
+|`<dependency-digest>` | `<uri>` | If needed, the buildpack will fetch the dependency with digest `<dependency-digest>` from `<uri>`
+
 ## License
 This buildpack is released under version 2.0 of the [Apache License][a].
 
