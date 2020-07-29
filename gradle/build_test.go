@@ -65,6 +65,10 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		result, err := gradleBuild.Build(ctx)
 		Expect(err).NotTo(HaveOccurred())
 
+		fi, err := os.Stat(filepath.Join(ctx.Application.Path, "gradlew"))
+		Expect(err).NotTo(HaveOccurred())
+		Expect(fi.Mode()).To(BeEquivalentTo(0755))
+
 		Expect(result.Layers).To(HaveLen(2))
 		Expect(result.Layers[0].Name()).To(Equal("cache"))
 		Expect(result.Layers[1].Name()).To(Equal("application"))
