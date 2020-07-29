@@ -72,7 +72,12 @@ func (b Build) Build(context libcnb.BuildContext) (libcnb.BuildResult, error) {
 		command = filepath.Join(context.Layers.Path, "gradle", "bin", "gradle")
 	} else if err != nil {
 		return libcnb.BuildResult{}, fmt.Errorf("unable to stat %s\n%w", command, err)
+	} else {
+		if err := os.Chmod(command, 0755); err != nil {
+			return libcnb.BuildResult{}, fmt.Errorf("unable to chmod %s\n%w", command, err)
+		}
 	}
+
 	u, err := user.Current()
 	if err != nil {
 		return libcnb.BuildResult{}, fmt.Errorf("unable to determine user home directory\n%w", err)
