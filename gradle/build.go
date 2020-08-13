@@ -69,7 +69,7 @@ func (b Build) Build(context libcnb.BuildContext) (libcnb.BuildResult, error) {
 		d.Logger = b.Logger
 		result.Layers = append(result.Layers, d)
 
-		command = filepath.Join(context.Layers.Path, "gradle", "bin", "gradle")
+		command = filepath.Join(context.Layers.Path, d.Name(), "bin", "gradle")
 	} else if err != nil {
 		return libcnb.BuildResult{}, fmt.Errorf("unable to stat %s\n%w", command, err)
 	} else {
