@@ -31,7 +31,7 @@ id = "org.cloudfoundry.stacks.cflinuxfs3"
 
 [[metadata.configurations]]
 name        = "BP_GRADLE_BUILD_ARGUMENTS"
-description = "the arguments to pass to Maven"
+description = "the arguments to pass to Gradle"
 default     = "--no-daemon -x test build"
 build       = true
 
