@@ -2,7 +2,7 @@
 The Paketo <NAME> Buildpack is a Cloud Native Buildpack that build Gradle-based applications from source.
 
 ## Behavior
-This buildpack will participate ant of the following conditions are met
+This buildpack will participate any of the following conditions are met
 
 * `<APPLICATION_ROOT>/build.gradle` exists
 * `<APPLICATION_ROOT>/build.gradle.kts` exists
