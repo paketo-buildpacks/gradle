@@ -95,6 +95,11 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		Expect(result.Layers[1].Name()).To(Equal("cache"))
 		Expect(result.Layers[2].Name()).To(Equal("application"))
 		Expect(result.Layers[2].(libbs.Application).Command).To(Equal(filepath.Join(ctx.Layers.Path, "gradle", "bin", "gradle")))
+
+		Expect(result.BOM.Entries).To(HaveLen(1))
+		Expect(result.BOM.Entries[0].Name).To(Equal("gradle"))
+		Expect(result.BOM.Entries[0].Build).To(BeTrue())
+		Expect(result.BOM.Entries[0].Launch).To(BeFalse())
 	})
 }
 
@@ -106,7 +111,7 @@ func (f *FakeApplicationFactory) NewApplication(
 	_ libbs.ArtifactResolver,
 	_ libbs.Cache,
 	command string,
-	_ *libcnb.BuildpackPlan,
+	_ *libcnb.BOM,
 	_ string,
 ) (libbs.Application, error) {
 	return libbs.Application{Command: command}, nil
