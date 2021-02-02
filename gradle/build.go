@@ -35,7 +35,7 @@ type Build struct {
 
 type ApplicationFactory interface {
 	NewApplication(additionalMetadata map[string]interface{}, arguments []string, artifactResolver libbs.ArtifactResolver,
-		cache libbs.Cache, command string, plan *libcnb.BuildpackPlan, applicationPath string) (libbs.Application, error)
+		cache libbs.Cache, command string, bom *libcnb.BOM, applicationPath string) (libbs.Application, error)
 }
 
 func (b Build) Build(context libcnb.BuildContext) (libcnb.BuildResult, error) {
@@ -65,9 +65,10 @@ func (b Build) Build(context libcnb.BuildContext) (libcnb.BuildResult, error) {
 			return libcnb.BuildResult{}, fmt.Errorf("unable to find dependency\n%w", err)
 		}
 
-		d := NewDistribution(dep, dc, result.Plan)
+		d, be := NewDistribution(dep, dc)
 		d.Logger = b.Logger
 		result.Layers = append(result.Layers, d)
+		result.BOM.Entries = append(result.BOM.Entries, be)
 
 		command = filepath.Join(context.Layers.Path, d.Name(), "bin", "gradle")
 	} else if err != nil {
@@ -105,7 +106,7 @@ func (b Build) Build(context libcnb.BuildContext) (libcnb.BuildResult, error) {
 		art,
 		c,
 		command,
-		result.Plan,
+		result.BOM,
 		context.Application.Path,
 	)
 	if err != nil {
