@@ -61,7 +61,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 				{
 					Provides: []libcnb.BuildPlanProvide{
 						{Name: "gradle"},
-						{Name: "jvm-application"},
+						{Name: "jvm-application-package"},
 					},
 					Requires: []libcnb.BuildPlanRequire{
 						{Name: "gradle"},
@@ -81,7 +81,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 				{
 					Provides: []libcnb.BuildPlanProvide{
 						{Name: "gradle"},
-						{Name: "jvm-application"},
+						{Name: "jvm-application-package"},
 					},
 					Requires: []libcnb.BuildPlanRequire{
 						{Name: "gradle"},
