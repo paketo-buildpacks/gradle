@@ -92,4 +92,43 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 		}))
 	})
 
+	it("passes with settings.gradle", func() {
+		Expect(ioutil.WriteFile(filepath.Join(ctx.Application.Path, "settings.gradle"), []byte{}, 0644))
+
+		Expect(detect.Detect(ctx)).To(Equal(libcnb.DetectResult{
+			Pass: true,
+			Plans: []libcnb.BuildPlan{
+				{
+					Provides: []libcnb.BuildPlanProvide{
+						{Name: "gradle"},
+						{Name: "jvm-application-package"},
+					},
+					Requires: []libcnb.BuildPlanRequire{
+						{Name: "gradle"},
+						{Name: "jdk"},
+					},
+				},
+			},
+		}))
+	})
+
+	it("passes with settings.gradle.kts", func() {
+		Expect(ioutil.WriteFile(filepath.Join(ctx.Application.Path, "settings.gradle.kts"), []byte{}, 0644))
+
+		Expect(detect.Detect(ctx)).To(Equal(libcnb.DetectResult{
+			Pass: true,
+			Plans: []libcnb.BuildPlan{
+				{
+					Provides: []libcnb.BuildPlanProvide{
+						{Name: "gradle"},
+						{Name: "jvm-application-package"},
+					},
+					Requires: []libcnb.BuildPlanRequire{
+						{Name: "gradle"},
+						{Name: "jdk"},
+					},
+				},
+			},
+		}))
+	})
 }
