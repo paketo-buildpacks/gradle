@@ -36,6 +36,8 @@ func (Detect) Detect(context libcnb.DetectContext) (libcnb.DetectResult, error) 
 	files := []string{
 		filepath.Join(context.Application.Path, "build.gradle"),
 		filepath.Join(context.Application.Path, "build.gradle.kts"),
+		filepath.Join(context.Application.Path, "settings.gradle"),
+		filepath.Join(context.Application.Path, "settings.gradle.kts"),
 	}
 
 	for _, file := range files {
