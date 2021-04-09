@@ -17,6 +17,7 @@
 package gradle_test
 
 import (
+	"github.com/paketo-buildpacks/libpak"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -37,6 +38,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 
 		ctx         libcnb.BuildContext
 		gradleBuild gradle.Build
+		homeDir     string
 	)
 
 	it.Before(func() {
@@ -45,17 +47,31 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		ctx.Application.Path, err = ioutil.TempDir("", "build-application")
 		Expect(err).NotTo(HaveOccurred())
 
+		ctx.Buildpack.Metadata = map[string]interface{}{
+			"configurations": []map[string]interface{}{
+				{"name": "BP_GRADLE_BUILD_ARGUMENTS", "default": "test-argument"},
+			},
+		}
+
 		ctx.Layers.Path, err = ioutil.TempDir("", "build-layers")
+		Expect(err).NotTo(HaveOccurred())
+
+		homeDir, err = ioutil.TempDir("", "home-dir")
 		Expect(err).NotTo(HaveOccurred())
 
 		gradleBuild = gradle.Build{
 			ApplicationFactory: &FakeApplicationFactory{},
+			HomeDirectoryResolver: FakeHomeDirectoryResolver{path: homeDir},
 		}
 	})
 
 	it.After(func() {
 		Expect(os.RemoveAll(ctx.Application.Path)).To(Succeed())
 		Expect(os.RemoveAll(ctx.Layers.Path)).To(Succeed())
+
+		homeDir,err := gradleBuild.HomeDirectoryResolver.Location()
+		Expect(err).ToNot(HaveOccurred())
+		Expect(os.RemoveAll(homeDir)).To(Succeed())
 	})
 
 	it("does not contribute distribution if wrapper exists", func() {
@@ -101,18 +117,90 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		Expect(result.BOM.Entries[0].Build).To(BeTrue())
 		Expect(result.BOM.Entries[0].Launch).To(BeFalse())
 	})
+
+
+	context("gradle properties bindings exists", func() {
+		var result libcnb.BuildResult
+
+		it.Before(func() {
+			var err error
+			ctx.StackID = "test-stack-id"
+			ctx.Platform.Path, err = ioutil.TempDir("", "gradle-test-platform")
+			Expect(ioutil.WriteFile(filepath.Join(ctx.Application.Path, "gradlew"), []byte{}, 0644)).To(Succeed())
+			ctx.Platform.Bindings = libcnb.Bindings{
+				{
+					Name:   "some-gradle",
+					Type:   "gradle",
+					Secret: map[string]string{"gradle.properties": "gradle-settings-content"},
+					Path:   filepath.Join(ctx.Platform.Path, "bindings", "some-gradle"), // TODO: is this what get's hashed?
+				},
+			}
+			gradleSettingsPath, ok := ctx.Platform.Bindings[0].SecretFilePath("gradle.properties")
+			Expect(os.MkdirAll(filepath.Dir(gradleSettingsPath), 0777)).To(Succeed())
+			Expect(ok).To(BeTrue())
+			Expect(ioutil.WriteFile(
+				gradleSettingsPath,
+				[]byte("gradle-settings-content"),
+				0644,
+			)).To(Succeed())
+
+			result, err = gradleBuild.Build(ctx)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(result.Layers).To(HaveLen(2))
+		})
+
+		it.After(func() {
+			Expect(os.RemoveAll(ctx.Platform.Path)).To(Succeed())
+		})
+
+		it("provides gradle.properties under $GRADLE_USER_HOME", func() {
+			gradlePropertiesPath := filepath.Join(homeDir, ".gradle", "gradle.properties")
+			Expect(gradlePropertiesPath).To(BeARegularFile())
+
+			data, err := ioutil.ReadFile(gradlePropertiesPath)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(string(data)).To(Equal("gradle-settings-content"))
+		})
+
+		it("adds the hash of gradle.properties to the layer metadata", func() {
+			md := result.Layers[1].(libbs.Application).LayerContributor.ExpectedMetadata
+			mdMap, ok := md.(map[string]interface{})
+			Expect(ok).To(BeTrue())
+			// expected: sha256 of the string "gradle-settings-content"
+			expected := "e6fdb059bdd9e59cec36afd5fb39c1e5b3c83694253b61c359701b4097520da4"
+			Expect(mdMap["gradle-properties-sha256"]).To(Equal(expected))
+		})
+	})
 }
 
 type FakeApplicationFactory struct{}
 
 func (f *FakeApplicationFactory) NewApplication(
-	_ map[string]interface{},
-	_ []string,
+	additionalMetdata map[string]interface{},
+	argugments []string,
 	_ libbs.ArtifactResolver,
-	_ libbs.Cache,
+	cache libbs.Cache,
 	command string,
 	_ *libcnb.BOM,
 	_ string,
 ) (libbs.Application, error) {
-	return libbs.Application{Command: command}, nil
+	contributor := libpak.NewLayerContributor(
+		"Compiled Application",
+		additionalMetdata,
+		libcnb.LayerTypes{Cache: true},
+	)
+	return libbs.Application{
+		LayerContributor: contributor,
+		Arguments:        argugments,
+		Command:          command,
+		Cache:            cache,
+	}, nil
+}
+
+type FakeHomeDirectoryResolver struct{
+	path string
+}
+
+func (f FakeHomeDirectoryResolver) Location() (string, error) {
+	return f.path, nil
 }

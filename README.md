@@ -29,6 +29,11 @@ The buildpack will do the following:
 ## Bindings
 The buildpack optionally accepts the following bindings:
 
+### Type: `gradle`
+|Secret | Description
+|-----|--------------
+|`gradle.properties` | If present, the contents of the file are copied to `$GRADLE_USER_HOME/gradle.properties` which is [picked up by gradle and merged](https://docs.gradle.org/current/userguide/build_environment.html#sec:gradle_configuration_properties) when it runs.
+
 ### Type: `dependency-mapping`
 |Key                   | Value   | Description
 |----------------------|---------|------------

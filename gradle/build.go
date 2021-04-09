@@ -17,7 +17,12 @@
 package gradle
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
+	"github.com/paketo-buildpacks/libpak/bindings"
+	"io"
+	"io/ioutil"
 	"os"
 	"os/user"
 	"path/filepath"
@@ -31,11 +36,27 @@ import (
 type Build struct {
 	Logger             bard.Logger
 	ApplicationFactory ApplicationFactory
+	HomeDirectoryResolver HomeDirectoryResolver
 }
 
 type ApplicationFactory interface {
 	NewApplication(additionalMetadata map[string]interface{}, arguments []string, artifactResolver libbs.ArtifactResolver,
 		cache libbs.Cache, command string, bom *libcnb.BOM, applicationPath string) (libbs.Application, error)
+}
+
+type HomeDirectoryResolver interface {
+	Location() (string, error)
+}
+
+type OSHomeDirectoryResolver struct {}
+
+func (p OSHomeDirectoryResolver) Location() (string, error) {
+	u, err := user.Current()
+	if err != nil {
+		return "", fmt.Errorf("unable to determine user home directory\n%w", err)
+	}
+
+	return u.HomeDir, nil
 }
 
 func (b Build) Build(context libcnb.BuildContext) (libcnb.BuildResult, error) {
@@ -79,18 +100,29 @@ func (b Build) Build(context libcnb.BuildContext) (libcnb.BuildResult, error) {
 		}
 	}
 
-	u, err := user.Current()
+	homeDir, err := b.HomeDirectoryResolver.Location()
 	if err != nil {
-		return libcnb.BuildResult{}, fmt.Errorf("unable to determine user home directory\n%w", err)
+		return libcnb.BuildResult{}, fmt.Errorf("home directory resolution failure\n%w", err)
 	}
+	gradleHome := filepath.Join(homeDir, ".gradle")
 
-	c := libbs.Cache{Path: filepath.Join(u.HomeDir, ".gradle")}
+	c := libbs.Cache{Path: gradleHome}
 	c.Logger = b.Logger
 	result.Layers = append(result.Layers, c)
 
 	args, err := libbs.ResolveArguments("BP_GRADLE_BUILD_ARGUMENTS", cr)
 	if err != nil {
 		return libcnb.BuildResult{}, fmt.Errorf("unable to resolve build arguments\n%w", err)
+	}
+
+	md := map[string]interface{}{}
+	if binding, ok, err := bindings.ResolveOne(context.Platform.Bindings, bindings.OfType("gradle")); err != nil {
+		return libcnb.BuildResult{}, fmt.Errorf("unable to resolve binding\n%w", err)
+	} else if ok {
+		err = handleGradleSettings(binding, gradleHome, md)
+		if err != nil {
+			return libcnb.BuildResult{}, fmt.Errorf("unable to process maven settings from binding\n%w", err)
+		}
 	}
 
 	art := libbs.ArtifactResolver{
@@ -101,7 +133,7 @@ func (b Build) Build(context libcnb.BuildContext) (libcnb.BuildResult, error) {
 	}
 
 	a, err := b.ApplicationFactory.NewApplication(
-		map[string]interface{}{},
+		md,
 		args,
 		art,
 		c,
@@ -116,4 +148,38 @@ func (b Build) Build(context libcnb.BuildContext) (libcnb.BuildResult, error) {
 	result.Layers = append(result.Layers, a)
 
 	return result, nil
+}
+
+func handleGradleSettings(binding libcnb.Binding, gradleHome string, md map[string]interface{}) error {
+	path, ok := binding.SecretFilePath("gradle.properties")
+	if !ok {
+		return nil
+	}
+
+	gradleProperties, err := ioutil.ReadFile(path)
+	if err != nil {
+		return fmt.Errorf("error reading gradle.properties\n%w", err)
+	}
+
+	err = os.MkdirAll(gradleHome, 0755)
+	if err != nil {
+		return fmt.Errorf("cannot make gradle home\n%w", err)
+	}
+
+	err = ioutil.WriteFile(filepath.Join(gradleHome, "gradle.properties"), gradleProperties, 0644)
+	if err != nil {
+		return fmt.Errorf("error writing gradle.properties\n%w", err)
+	}
+
+	hasher := sha256.New()
+	propertiesFile, err := os.Open(path)
+	if err != nil {
+		return fmt.Errorf("unable to open gradle.properties\n%w", err)
+	}
+	if _, err := io.Copy(hasher, propertiesFile); err != nil {
+		return fmt.Errorf("error hashing gradle.properties\n%w", err)
+	}
+
+	md["gradle-properties-sha256"] = hex.EncodeToString(hasher.Sum(nil))
+	return nil
 }

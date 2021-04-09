@@ -32,6 +32,7 @@ func main() {
 		gradle.Build{
 			ApplicationFactory: libbs.NewApplicationFactory(),
 			Logger:             bard.NewLogger(os.Stdout),
+			HomeDirectoryResolver: gradle.OSHomeDirectoryResolver{},
 		},
 	)
 }
