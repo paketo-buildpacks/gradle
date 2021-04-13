@@ -20,12 +20,12 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
-	"github.com/paketo-buildpacks/libpak/bindings"
 	"io"
-	"io/ioutil"
 	"os"
 	"os/user"
 	"path/filepath"
+
+	"github.com/paketo-buildpacks/libpak/bindings"
 
 	"github.com/buildpacks/libcnb"
 	"github.com/paketo-buildpacks/libbs"
@@ -34,8 +34,8 @@ import (
 )
 
 type Build struct {
-	Logger             bard.Logger
-	ApplicationFactory ApplicationFactory
+	Logger                bard.Logger
+	ApplicationFactory    ApplicationFactory
 	HomeDirectoryResolver HomeDirectoryResolver
 }
 
@@ -48,7 +48,7 @@ type HomeDirectoryResolver interface {
 	Location() (string, error)
 }
 
-type OSHomeDirectoryResolver struct {}
+type OSHomeDirectoryResolver struct{}
 
 func (p OSHomeDirectoryResolver) Location() (string, error) {
 	u, err := user.Current()
@@ -102,7 +102,7 @@ func (b Build) Build(context libcnb.BuildContext) (libcnb.BuildResult, error) {
 
 	homeDir, err := b.HomeDirectoryResolver.Location()
 	if err != nil {
-		return libcnb.BuildResult{}, fmt.Errorf("home directory resolution failure\n%w", err)
+		return libcnb.BuildResult{}, fmt.Errorf("unable to resolve home directory\n%w", err)
 	}
 	gradleHome := filepath.Join(homeDir, ".gradle")
 
@@ -156,19 +156,24 @@ func handleGradleSettings(binding libcnb.Binding, gradleHome string, md map[stri
 		return nil
 	}
 
-	gradleProperties, err := ioutil.ReadFile(path)
+	err := os.MkdirAll(gradleHome, 0755)
 	if err != nil {
-		return fmt.Errorf("error reading gradle.properties\n%w", err)
+		return fmt.Errorf("unable to make gradle home\n%w", err)
 	}
 
-	err = os.MkdirAll(gradleHome, 0755)
-	if err != nil {
-		return fmt.Errorf("cannot make gradle home\n%w", err)
-	}
+	gradlePropertiesPath := filepath.Join(gradleHome, "gradle.properties")
+	if err := os.Symlink(path, gradlePropertiesPath); os.IsExist(err) {
+		err = os.Remove(gradlePropertiesPath)
+		if err != nil {
+			return fmt.Errorf("unable to remove old symlink for gradle.properties\n%w", err)
+		}
 
-	err = ioutil.WriteFile(filepath.Join(gradleHome, "gradle.properties"), gradleProperties, 0644)
-	if err != nil {
-		return fmt.Errorf("error writing gradle.properties\n%w", err)
+		err = os.Symlink(path, gradlePropertiesPath)
+		if err != nil {
+			return fmt.Errorf("unable to create symlink for gradle.properties on retry\n%w", err)
+		}
+	} else if err != nil {
+		return fmt.Errorf("unable to symlink bound gradle.properties\n%w", err)
 	}
 
 	hasher := sha256.New()
