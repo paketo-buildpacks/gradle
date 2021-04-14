@@ -121,7 +121,7 @@ func (b Build) Build(context libcnb.BuildContext) (libcnb.BuildResult, error) {
 	} else if ok {
 		err = handleGradleSettings(binding, gradleHome, md)
 		if err != nil {
-			return libcnb.BuildResult{}, fmt.Errorf("unable to process maven settings from binding\n%w", err)
+			return libcnb.BuildResult{}, fmt.Errorf("unable to process gradle properties from binding\n%w", err)
 		}
 	}
 
@@ -150,7 +150,7 @@ func (b Build) Build(context libcnb.BuildContext) (libcnb.BuildResult, error) {
 	return result, nil
 }
 
-func handleGradleSettings(binding libcnb.Binding, gradleHome string, md map[string]interface{}) error {
+func handleGradleProperties(binding libcnb.Binding, gradleHome string, md map[string]interface{}) error {
 	path, ok := binding.SecretFilePath("gradle.properties")
 	if !ok {
 		return nil
