@@ -22,8 +22,6 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/paketo-buildpacks/libpak"
-
 	"github.com/buildpacks/libcnb"
 	. "github.com/onsi/gomega"
 	"github.com/sclevine/spec"
@@ -48,12 +46,6 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		ctx.Application.Path, err = ioutil.TempDir("", "build-application")
 		Expect(err).NotTo(HaveOccurred())
 
-		ctx.Buildpack.Metadata = map[string]interface{}{
-			"configurations": []map[string]interface{}{
-				{"name": "BP_GRADLE_BUILD_ARGUMENTS", "default": "test-argument"},
-			},
-		}
-
 		ctx.Layers.Path, err = ioutil.TempDir("", "build-layers")
 		Expect(err).NotTo(HaveOccurred())
 
@@ -69,7 +61,6 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 	it.After(func() {
 		Expect(os.RemoveAll(ctx.Application.Path)).To(Succeed())
 		Expect(os.RemoveAll(ctx.Layers.Path)).To(Succeed())
-
 		Expect(os.RemoveAll(homeDir)).To(Succeed())
 	})
 
@@ -131,16 +122,16 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 				{
 					Name:   "some-gradle",
 					Type:   "gradle",
-					Secret: map[string]string{"gradle.properties": "gradle-settings-content"},
+					Secret: map[string]string{"gradle.properties": "gradle-properties-content"},
 					Path:   bindingPath,
 				},
 			}
-			gradleSettingsPath, ok := ctx.Platform.Bindings[0].SecretFilePath("gradle.properties")
-			Expect(os.MkdirAll(filepath.Dir(gradleSettingsPath), 0777)).To(Succeed())
+			gradlePropertiesPath, ok := ctx.Platform.Bindings[0].SecretFilePath("gradle.properties")
+			Expect(os.MkdirAll(filepath.Dir(gradlePropertiesPath), 0777)).To(Succeed())
 			Expect(ok).To(BeTrue())
 			Expect(ioutil.WriteFile(
-				gradleSettingsPath,
-				[]byte("gradle-settings-content"),
+				gradlePropertiesPath,
+				[]byte("gradle-properties-content"),
 				0644,
 			)).To(Succeed())
 		})
@@ -152,52 +143,9 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		it("provides gradle.properties under $GRADLE_USER_HOME", func() {
 			result, err := gradleBuild.Build(ctx)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(result.Layers).To(HaveLen(2))
 
-			gradlePropertiesPath := filepath.Join(homeDir, ".gradle", "gradle.properties")
-			Expect(gradlePropertiesPath).To(BeARegularFile())
-
-			data, err := ioutil.ReadFile(gradlePropertiesPath)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(string(data)).To(Equal("gradle-settings-content"))
-		})
-
-		it("recreates symlink for gradle.properties under $GRADLE_USER_HOME", func() {
-			gradlePropertiesPath := filepath.Join(homeDir, ".gradle", "gradle.properties")
-			Expect(os.MkdirAll(filepath.Dir(gradlePropertiesPath), 0755)).ToNot(HaveOccurred())
-			err := os.Symlink("/dev/null", gradlePropertiesPath)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(gradlePropertiesPath).To(BeAnExistingFile())
-
-			result, err := gradleBuild.Build(ctx)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(result.Layers).To(HaveLen(2))
-
-			info, err := os.Lstat(gradlePropertiesPath)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(info.Mode()&os.ModeSymlink != 0).To(BeTrue()) // is symlink bit set
-
-			target, err := os.Readlink(gradlePropertiesPath)
-			Expect(err).NotTo(HaveOccurred())
-			// symlink should point to our binding, not /dev/null
-			Expect(target).To(Equal(filepath.Join(bindingPath, "gradle.properties")))
-
-			data, err := ioutil.ReadFile(gradlePropertiesPath)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(string(data)).To(Equal("gradle-settings-content"))
-		})
-
-		it("adds the hash of gradle.properties to the layer metadata", func() {
-			result, err := gradleBuild.Build(ctx)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(result.Layers).To(HaveLen(2))
-
-			md := result.Layers[1].(libbs.Application).LayerContributor.ExpectedMetadata
-			mdMap, ok := md.(map[string]interface{})
-			Expect(ok).To(BeTrue())
-			// expected: sha256 of the string "gradle-settings-content"
-			expected := "e6fdb059bdd9e59cec36afd5fb39c1e5b3c83694253b61c359701b4097520da4"
-			Expect(mdMap["gradle-properties-sha256"]).To(Equal(expected))
+			Expect(result.Layers).To(HaveLen(3))
+			Expect(result.Layers[1].Name()).To(Equal("gradle-properties"))
 		})
 	})
 }
@@ -205,25 +153,15 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 type FakeApplicationFactory struct{}
 
 func (f *FakeApplicationFactory) NewApplication(
-	additionalMetdata map[string]interface{},
-	argugments []string,
+	_ map[string]interface{},
+	_ []string,
 	_ libbs.ArtifactResolver,
-	cache libbs.Cache,
+	_ libbs.Cache,
 	command string,
 	_ *libcnb.BOM,
 	_ string,
 ) (libbs.Application, error) {
-	contributor := libpak.NewLayerContributor(
-		"Compiled Application",
-		additionalMetdata,
-		libcnb.LayerTypes{Cache: true},
-	)
-	return libbs.Application{
-		LayerContributor: contributor,
-		Arguments:        argugments,
-		Command:          command,
-		Cache:            cache,
-	}, nil
+	return libbs.Application{Command: command}, nil
 }
 
 type FakeHomeDirectoryResolver struct {

@@ -17,10 +17,7 @@
 package gradle
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
 	"fmt"
-	"io"
 	"os"
 	"os/user"
 	"path/filepath"
@@ -115,14 +112,13 @@ func (b Build) Build(context libcnb.BuildContext) (libcnb.BuildResult, error) {
 		return libcnb.BuildResult{}, fmt.Errorf("unable to resolve build arguments\n%w", err)
 	}
 
-	md := map[string]interface{}{}
 	if binding, ok, err := bindings.ResolveOne(context.Platform.Bindings, bindings.OfType("gradle")); err != nil {
 		return libcnb.BuildResult{}, fmt.Errorf("unable to resolve binding\n%w", err)
 	} else if ok {
-		err = handleGradleSettings(binding, gradleHome, md)
-		if err != nil {
-			return libcnb.BuildResult{}, fmt.Errorf("unable to process gradle properties from binding\n%w", err)
-		}
+		result.Layers = append(result.Layers, PropertiesFile{
+			binding,
+			gradleHome,
+		})
 	}
 
 	art := libbs.ArtifactResolver{
@@ -133,7 +129,7 @@ func (b Build) Build(context libcnb.BuildContext) (libcnb.BuildResult, error) {
 	}
 
 	a, err := b.ApplicationFactory.NewApplication(
-		md,
+		map[string]interface{}{},
 		args,
 		art,
 		c,
@@ -148,43 +144,4 @@ func (b Build) Build(context libcnb.BuildContext) (libcnb.BuildResult, error) {
 	result.Layers = append(result.Layers, a)
 
 	return result, nil
-}
-
-func handleGradleProperties(binding libcnb.Binding, gradleHome string, md map[string]interface{}) error {
-	path, ok := binding.SecretFilePath("gradle.properties")
-	if !ok {
-		return nil
-	}
-
-	err := os.MkdirAll(gradleHome, 0755)
-	if err != nil {
-		return fmt.Errorf("unable to make gradle home\n%w", err)
-	}
-
-	gradlePropertiesPath := filepath.Join(gradleHome, "gradle.properties")
-	if err := os.Symlink(path, gradlePropertiesPath); os.IsExist(err) {
-		err = os.Remove(gradlePropertiesPath)
-		if err != nil {
-			return fmt.Errorf("unable to remove old symlink for gradle.properties\n%w", err)
-		}
-
-		err = os.Symlink(path, gradlePropertiesPath)
-		if err != nil {
-			return fmt.Errorf("unable to create symlink for gradle.properties on retry\n%w", err)
-		}
-	} else if err != nil {
-		return fmt.Errorf("unable to symlink bound gradle.properties\n%w", err)
-	}
-
-	hasher := sha256.New()
-	propertiesFile, err := os.Open(path)
-	if err != nil {
-		return fmt.Errorf("unable to open gradle.properties\n%w", err)
-	}
-	if _, err := io.Copy(hasher, propertiesFile); err != nil {
-		return fmt.Errorf("error hashing gradle.properties\n%w", err)
-	}
-
-	md["gradle-properties-sha256"] = hex.EncodeToString(hasher.Sum(nil))
-	return nil
 }
