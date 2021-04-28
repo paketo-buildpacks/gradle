@@ -17,6 +17,7 @@
 package gradle_test
 
 import (
+	"github.com/paketo-buildpacks/libpak"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -146,6 +147,19 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 
 			Expect(result.Layers).To(HaveLen(3))
 			Expect(result.Layers[1].Name()).To(Equal("gradle-properties"))
+			Expect(result.Layers[1])
+		})
+
+		it("adds the hash of gradle.properties to the layer metadata", func() {
+			result, err := gradleBuild.Build(ctx)
+			Expect(err).NotTo(HaveOccurred())
+
+			md := result.Layers[2].(libbs.Application).LayerContributor.ExpectedMetadata
+			mdMap, ok := md.(map[string]interface{})
+			Expect(ok).To(BeTrue())
+			// expected: sha256 of the string "gradle-properties-content"
+			expected := "6621087fb513e8db5544d34ccad59720793a1a5a9eb20a2df554422b8b5e50e5"
+			Expect(mdMap["gradle-properties-sha256"]).To(Equal(expected))
 		})
 	})
 }
@@ -153,7 +167,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 type FakeApplicationFactory struct{}
 
 func (f *FakeApplicationFactory) NewApplication(
-	_ map[string]interface{},
+	additionalMetdata map[string]interface{},
 	_ []string,
 	_ libbs.ArtifactResolver,
 	_ libbs.Cache,
@@ -161,7 +175,15 @@ func (f *FakeApplicationFactory) NewApplication(
 	_ *libcnb.BOM,
 	_ string,
 ) (libbs.Application, error) {
-	return libbs.Application{Command: command}, nil
+	contributor := libpak.NewLayerContributor(
+		"Compiled Application",
+		additionalMetdata,
+		libcnb.LayerTypes{Cache: true},
+	)
+	return libbs.Application{
+		LayerContributor: contributor,
+		Command:          command,
+	}, nil
 }
 
 type FakeHomeDirectoryResolver struct {

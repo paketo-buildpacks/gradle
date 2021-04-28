@@ -17,7 +17,10 @@
 package gradle
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
+	"io"
 	"os"
 	"os/user"
 	"path/filepath"
@@ -112,13 +115,28 @@ func (b Build) Build(context libcnb.BuildContext) (libcnb.BuildResult, error) {
 		return libcnb.BuildResult{}, fmt.Errorf("unable to resolve build arguments\n%w", err)
 	}
 
+	md := map[string]interface{}{}
 	if binding, ok, err := bindings.ResolveOne(context.Platform.Bindings, bindings.OfType("gradle")); err != nil {
 		return libcnb.BuildResult{}, fmt.Errorf("unable to resolve binding\n%w", err)
 	} else if ok {
-		result.Layers = append(result.Layers, PropertiesFile{
-			binding,
-			gradleHome,
-		})
+		gradlePropertiesPath, ok := binding.SecretFilePath("gradle.properties")
+		if ok {
+			gradlePropertiesFile, err := os.Open(gradlePropertiesPath)
+			if err != nil {
+				return libcnb.BuildResult{}, fmt.Errorf("unable to open gradle.properties\n%w", err)
+			}
+
+			hasher := sha256.New()
+			if _, err := io.Copy(hasher, gradlePropertiesFile); err != nil {
+				return libcnb.BuildResult{}, fmt.Errorf("unable to hash gradle.properties\n%w", err)
+			}
+			md["gradle-properties-sha256"] = hex.EncodeToString(hasher.Sum(nil))
+
+			result.Layers = append(result.Layers, PropertiesFile{
+				binding,
+				gradleHome,
+			})
+		}
 	}
 
 	art := libbs.ArtifactResolver{
@@ -129,7 +147,7 @@ func (b Build) Build(context libcnb.BuildContext) (libcnb.BuildResult, error) {
 	}
 
 	a, err := b.ApplicationFactory.NewApplication(
-		map[string]interface{}{},
+		md,
 		args,
 		art,
 		c,
