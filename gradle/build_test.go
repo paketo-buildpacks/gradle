@@ -37,6 +37,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 
 		ctx         libcnb.BuildContext
 		gradleBuild gradle.Build
+		homeDir     string
 	)
 
 	it.Before(func() {
@@ -48,14 +49,19 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		ctx.Layers.Path, err = ioutil.TempDir("", "build-layers")
 		Expect(err).NotTo(HaveOccurred())
 
+		homeDir, err = ioutil.TempDir("", "home-dir")
+		Expect(err).NotTo(HaveOccurred())
+
 		gradleBuild = gradle.Build{
-			ApplicationFactory: &FakeApplicationFactory{},
+			ApplicationFactory:    &FakeApplicationFactory{},
+			HomeDirectoryResolver: FakeHomeDirectoryResolver{path: homeDir},
 		}
 	})
 
 	it.After(func() {
 		Expect(os.RemoveAll(ctx.Application.Path)).To(Succeed())
 		Expect(os.RemoveAll(ctx.Layers.Path)).To(Succeed())
+		Expect(os.RemoveAll(homeDir)).To(Succeed())
 	})
 
 	it("does not contribute distribution if wrapper exists", func() {
@@ -101,6 +107,47 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		Expect(result.BOM.Entries[0].Build).To(BeTrue())
 		Expect(result.BOM.Entries[0].Launch).To(BeFalse())
 	})
+
+	context("gradle properties bindings exists", func() {
+		var bindingPath string
+
+		it.Before(func() {
+			var err error
+			ctx.StackID = "test-stack-id"
+			ctx.Platform.Path, err = ioutil.TempDir("", "gradle-test-platform")
+			Expect(err).NotTo(HaveOccurred())
+			Expect(ioutil.WriteFile(filepath.Join(ctx.Application.Path, "gradlew"), []byte{}, 0644)).To(Succeed())
+			bindingPath = filepath.Join(ctx.Platform.Path, "bindings", "some-gradle")
+			ctx.Platform.Bindings = libcnb.Bindings{
+				{
+					Name:   "some-gradle",
+					Type:   "gradle",
+					Secret: map[string]string{"gradle.properties": "gradle-properties-content"},
+					Path:   bindingPath,
+				},
+			}
+			gradlePropertiesPath, ok := ctx.Platform.Bindings[0].SecretFilePath("gradle.properties")
+			Expect(os.MkdirAll(filepath.Dir(gradlePropertiesPath), 0777)).To(Succeed())
+			Expect(ok).To(BeTrue())
+			Expect(ioutil.WriteFile(
+				gradlePropertiesPath,
+				[]byte("gradle-properties-content"),
+				0644,
+			)).To(Succeed())
+		})
+
+		it.After(func() {
+			Expect(os.RemoveAll(ctx.Platform.Path)).To(Succeed())
+		})
+
+		it("provides gradle.properties under $GRADLE_USER_HOME", func() {
+			result, err := gradleBuild.Build(ctx)
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(result.Layers).To(HaveLen(3))
+			Expect(result.Layers[1].Name()).To(Equal("gradle-properties"))
+		})
+	})
 }
 
 type FakeApplicationFactory struct{}
@@ -115,4 +162,12 @@ func (f *FakeApplicationFactory) NewApplication(
 	_ string,
 ) (libbs.Application, error) {
 	return libbs.Application{Command: command}, nil
+}
+
+type FakeHomeDirectoryResolver struct {
+	path string
+}
+
+func (f FakeHomeDirectoryResolver) Location() (string, error) {
+	return f.path, nil
 }

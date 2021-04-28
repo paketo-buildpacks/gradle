@@ -22,6 +22,8 @@ import (
 	"os/user"
 	"path/filepath"
 
+	"github.com/paketo-buildpacks/libpak/bindings"
+
 	"github.com/buildpacks/libcnb"
 	"github.com/paketo-buildpacks/libbs"
 	"github.com/paketo-buildpacks/libpak"
@@ -29,13 +31,29 @@ import (
 )
 
 type Build struct {
-	Logger             bard.Logger
-	ApplicationFactory ApplicationFactory
+	Logger                bard.Logger
+	ApplicationFactory    ApplicationFactory
+	HomeDirectoryResolver HomeDirectoryResolver
 }
 
 type ApplicationFactory interface {
 	NewApplication(additionalMetadata map[string]interface{}, arguments []string, artifactResolver libbs.ArtifactResolver,
 		cache libbs.Cache, command string, bom *libcnb.BOM, applicationPath string) (libbs.Application, error)
+}
+
+type HomeDirectoryResolver interface {
+	Location() (string, error)
+}
+
+type OSHomeDirectoryResolver struct{}
+
+func (p OSHomeDirectoryResolver) Location() (string, error) {
+	u, err := user.Current()
+	if err != nil {
+		return "", fmt.Errorf("unable to determine user home directory\n%w", err)
+	}
+
+	return u.HomeDir, nil
 }
 
 func (b Build) Build(context libcnb.BuildContext) (libcnb.BuildResult, error) {
@@ -79,18 +97,28 @@ func (b Build) Build(context libcnb.BuildContext) (libcnb.BuildResult, error) {
 		}
 	}
 
-	u, err := user.Current()
+	homeDir, err := b.HomeDirectoryResolver.Location()
 	if err != nil {
-		return libcnb.BuildResult{}, fmt.Errorf("unable to determine user home directory\n%w", err)
+		return libcnb.BuildResult{}, fmt.Errorf("unable to resolve home directory\n%w", err)
 	}
+	gradleHome := filepath.Join(homeDir, ".gradle")
 
-	c := libbs.Cache{Path: filepath.Join(u.HomeDir, ".gradle")}
+	c := libbs.Cache{Path: gradleHome}
 	c.Logger = b.Logger
 	result.Layers = append(result.Layers, c)
 
 	args, err := libbs.ResolveArguments("BP_GRADLE_BUILD_ARGUMENTS", cr)
 	if err != nil {
 		return libcnb.BuildResult{}, fmt.Errorf("unable to resolve build arguments\n%w", err)
+	}
+
+	if binding, ok, err := bindings.ResolveOne(context.Platform.Bindings, bindings.OfType("gradle")); err != nil {
+		return libcnb.BuildResult{}, fmt.Errorf("unable to resolve binding\n%w", err)
+	} else if ok {
+		result.Layers = append(result.Layers, PropertiesFile{
+			binding,
+			gradleHome,
+		})
 	}
 
 	art := libbs.ArtifactResolver{

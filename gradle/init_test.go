@@ -28,5 +28,6 @@ func TestUnit(t *testing.T) {
 	suite("Build", testBuild)
 	suite("Detect", testDetect)
 	suite("Distribution", testDistribution)
+	suite("Properties", testGradleProperties)
 	suite.Run(t)
 }

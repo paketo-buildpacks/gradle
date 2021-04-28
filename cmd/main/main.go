@@ -30,8 +30,9 @@ func main() {
 	libpak.Main(
 		gradle.Detect{},
 		gradle.Build{
-			ApplicationFactory: libbs.NewApplicationFactory(),
-			Logger:             bard.NewLogger(os.Stdout),
+			ApplicationFactory:    libbs.NewApplicationFactory(),
+			Logger:                bard.NewLogger(os.Stdout),
+			HomeDirectoryResolver: gradle.OSHomeDirectoryResolver{},
 		},
 	)
 }
