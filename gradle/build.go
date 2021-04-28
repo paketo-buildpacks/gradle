@@ -144,6 +144,7 @@ func (b Build) Build(context libcnb.BuildContext) (libcnb.BuildResult, error) {
 		ConfigurationResolver:    cr,
 		ModuleConfigurationKey:   "BP_GRADLE_BUILT_MODULE",
 		InterestingFileDetector:  libbs.JARInterestingFileDetector{},
+		AdditionalHelpMessage:    "If this is unexpected, please try setting `rootProject.name` in `settings.gradle` or add a project.toml file and exclude the `build/` directory. For details see https://buildpacks.io/docs/app-developer-guide/using-project-descriptor/.",
 	}
 
 	a, err := b.ApplicationFactory.NewApplication(
