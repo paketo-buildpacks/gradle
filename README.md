@@ -12,17 +12,17 @@ The buildpack will do the following:
 * Requests that a JDK be installed
 * Links the `~/.gradle` to a layer for caching
 * If `<APPLICATION_ROOT>/gradlew` exists
-  * Runs `<APPLICATION_ROOT>/gradlew --no-daemon -x test build` to build the application
+  * Runs `<APPLICATION_ROOT>/gradlew --no-daemon assemble` to build the application
 * If `<APPLICATION_ROOT>/gradlew` does not exist
   * Contributes Gradle to a layer with all commands on `$PATH`
-  * Runs `<GRADLE_ROOT>/bin/gradle -x test build` to build the application
+  * Runs `<GRADLE_ROOT>/bin/gradle --no-daemon assemble` to build the application
 * Removes the source code in `<APPLICATION_ROOT>`
 * Expands `<APPLICATION_ROOT>/build/libs/*.[jw]ar` to `<APPLICATION_ROOT>`
 
 ## Configuration
 | Environment Variable | Description
 | -------------------- | -----------
-| `$BP_GRADLE_BUILD_ARGUMENTS` | Configure the arguments to pass to build system.  Defaults to `--no-daemon -x test build`.
+| `$BP_GRADLE_BUILD_ARGUMENTS` | Configure the arguments to pass to build system.  Defaults to `--no-daemon assemble`.
 | `$BP_GRADLE_BUILT_MODULE` | Configure the module to find application artifact in.  Defaults to the root module (empty).
 | `$BP_GRADLE_BUILT_ARTIFACT` | Configure the built application artifact explicitly.  Supersedes `$BP_GRADLE_BUILT_MODULE`  Defaults to `build/libs/*.[jw]ar`.
 
