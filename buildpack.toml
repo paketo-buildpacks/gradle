@@ -32,7 +32,7 @@ id = "org.cloudfoundry.stacks.cflinuxfs3"
 [[metadata.configurations]]
 name        = "BP_GRADLE_BUILD_ARGUMENTS"
 description = "the arguments to pass to Gradle"
-default     = "--no-daemon -x test build"
+default     = "--no-daemon assemble"
 build       = true
 
 [[metadata.configurations]]
