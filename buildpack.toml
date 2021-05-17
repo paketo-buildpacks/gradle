@@ -49,9 +49,9 @@ build       = true
 [[metadata.dependencies]]
 id      = "gradle"
 name    = "Gradle"
-version = "7.0.1"
-uri     = "https://downloads.gradle.org/distributions/gradle-7.0.1-bin.zip"
-sha256  = "dccda8aa069563c8ba2f6cdfd0777df0e34a5b4d15138ca8b9757e94f4e8a8cb"
+version = "7.0.2"
+uri     = "https://downloads.gradle.org/distributions/gradle-7.0.2-bin.zip"
+sha256  = "0e46229820205440b48a5501122002842b82886e76af35f0f3a069243dca4b3c"
 stacks  = [ "io.buildpacks.stacks.bionic", "io.paketo.stacks.tiny", "org.cloudfoundry.stacks.cflinuxfs3" ]
 
   [[metadata.dependencies.licenses]]
