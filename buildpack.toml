@@ -12,13 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-api = "0.5"
+api = "0.6"
 
 [buildpack]
 id       = "paketo-buildpacks/gradle"
 name     = "Paketo Gradle Buildpack"
 version  = "{{.version}}"
 homepage = "https://github.com/paketo-buildpacks/gradle"
+description = "A Cloud Native Buildpack that builds Gradle-based applications from source"
+keywords    = ["java", "gradle", "build-systems"]
+
+[[buildpack.licenses]]
+type = "Apache-2.0"
+uri  = "https://github.com/paketo-buildpacks/gradle/blob/main/LICENSE"
 
 [[stacks]]
 id = "io.buildpacks.stacks.bionic"
