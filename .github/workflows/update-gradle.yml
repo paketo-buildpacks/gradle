@@ -43,8 +43,8 @@ jobs:
             - uses: actions/checkout@v2
             - id: dependency
               uses: docker://ghcr.io/paketo-buildpacks/actions/gradle-dependency:main
-            - id: buildpack
-              name: Update Buildpack Dependency
+            - name: Update Buildpack Dependency
+              id: buildpack
               run: |
                 #!/usr/bin/env bash
 
