@@ -28,6 +28,7 @@ const (
 	PlanEntryGradle                = "gradle"
 	PlanEntryJVMApplicationPackage = "jvm-application-package"
 	PlaneEntryJDK                  = "jdk"
+	PlanEntrySyft                  = "syft"
 )
 
 type Detect struct{}
@@ -57,6 +58,7 @@ func (Detect) Detect(context libcnb.DetectContext) (libcnb.DetectResult, error) 
 						{Name: PlanEntryJVMApplicationPackage},
 					},
 					Requires: []libcnb.BuildPlanRequire{
+						{Name: PlanEntrySyft},
 						{Name: PlanEntryGradle},
 						{Name: PlaneEntryJDK},
 					},

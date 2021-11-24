@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-api = "0.6"
+api = "0.7"
 
 [buildpack]
   description = "A Cloud Native Buildpack that builds Gradle-based applications from source"
@@ -21,6 +21,7 @@ api = "0.6"
   keywords = ["java", "gradle", "build-systems"]
   name = "Paketo Gradle Buildpack"
   version = "{{.version}}"
+  sbom-formats = ["application/vnd.cyclonedx+json", "application/vnd.syft+json"]
 
   [[buildpack.licenses]]
     type = "Apache-2.0"
@@ -54,6 +55,10 @@ api = "0.6"
     stacks = ["io.buildpacks.stacks.bionic", "io.paketo.stacks.tiny", "*"]
     uri = "https://downloads.gradle.org/distributions/gradle-7.3-bin.zip"
     version = "7.3.0"
+    purl = "pkg:generic/gradle@7.3.0"
+    cpes = [
+      "cpe:2.3:a:gradle:gradle:7.3.0:*:*:*:*:*:*:*"
+    ]
 
     [[metadata.dependencies.licenses]]
       type = "Apache-2.0"
