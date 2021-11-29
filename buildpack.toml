@@ -20,8 +20,8 @@ api = "0.7"
   id = "paketo-buildpacks/gradle"
   keywords = ["java", "gradle", "build-systems"]
   name = "Paketo Gradle Buildpack"
-  version = "{{.version}}"
   sbom-formats = ["application/vnd.cyclonedx+json", "application/vnd.syft+json"]
+  version = "{{.version}}"
 
   [[buildpack.licenses]]
     type = "Apache-2.0"
@@ -49,16 +49,14 @@ api = "0.7"
     name = "BP_GRADLE_BUILT_MODULE"
 
   [[metadata.dependencies]]
+    cpes = ["cpe:2.3:a:gradle:gradle:7.3.0:*:*:*:*:*:*:*"]
     id = "gradle"
     name = "Gradle"
+    purl = "pkg:generic/gradle@7.3.0"
     sha256 = "de8f52ad49bdc759164f72439a3bf56ddb1589c4cde802d3cec7d6ad0e0ee410"
     stacks = ["io.buildpacks.stacks.bionic", "io.paketo.stacks.tiny", "*"]
     uri = "https://downloads.gradle.org/distributions/gradle-7.3-bin.zip"
     version = "7.3.0"
-    purl = "pkg:generic/gradle@7.3.0"
-    cpes = [
-      "cpe:2.3:a:gradle:gradle:7.3.0:*:*:*:*:*:*:*"
-    ]
 
     [[metadata.dependencies.licenses]]
       type = "Apache-2.0"
