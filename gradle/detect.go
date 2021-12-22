@@ -18,10 +18,13 @@ package gradle
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 
 	"github.com/buildpacks/libcnb"
+	"github.com/paketo-buildpacks/libpak"
+	"github.com/paketo-buildpacks/libpak/bard"
 )
 
 const (
@@ -34,11 +37,39 @@ const (
 type Detect struct{}
 
 func (Detect) Detect(context libcnb.DetectContext) (libcnb.DetectResult, error) {
-	files := []string{
-		filepath.Join(context.Application.Path, "build.gradle"),
-		filepath.Join(context.Application.Path, "build.gradle.kts"),
-		filepath.Join(context.Application.Path, "settings.gradle"),
-		filepath.Join(context.Application.Path, "settings.gradle.kts"),
+
+	l := bard.NewLogger(ioutil.Discard)
+	cr, err := libpak.NewConfigurationResolver(context.Buildpack, &l)
+	if err != nil {
+		return libcnb.DetectResult{}, err
+	}
+
+	buildFile, _ := cr.Resolve("BP_GRADLE_BUILD_FILE")
+
+	if buildFile != "" {
+
+		file := filepath.Join(context.Application.Path, buildFile)
+		_, err = os.Stat(file)
+		if os.IsNotExist(err) {
+			return libcnb.DetectResult{Pass: false}, nil
+		} else if err != nil {
+			return libcnb.DetectResult{}, fmt.Errorf("unable to determine if %s exists\n%w", file, err)
+		}
+
+	}
+
+	var files []string
+	if buildFile != "" {
+		files = []string{
+			filepath.Join(context.Application.Path, buildFile),
+		}
+	} else {
+		files = []string{
+			filepath.Join(context.Application.Path, "build.gradle"),
+			filepath.Join(context.Application.Path, "build.gradle.kts"),
+			filepath.Join(context.Application.Path, "settings.gradle"),
+			filepath.Join(context.Application.Path, "settings.gradle.kts"),
+		}
 	}
 
 	for _, file := range files {

@@ -39,6 +39,12 @@ api = "0.7"
 
   [[metadata.configurations]]
     build = true
+    description = "the location of the main build config file, relative to the application root"
+    detect = true
+    name = "BP_GRADLE_BUILD_FILE"
+
+  [[metadata.configurations]]
+    build = true
     default = "build/libs/*.[jw]ar"
     description = "the built application artifact explicitly.  Supersedes $BP_GRADLE_BUILT_MODULE"
     name = "BP_GRADLE_BUILT_ARTIFACT"
