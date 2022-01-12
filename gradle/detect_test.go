@@ -42,6 +42,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 
 		ctx.Application.Path, err = ioutil.TempDir("", "gradle")
 		Expect(err).NotTo(HaveOccurred())
+		os.Unsetenv("BP_GRADLE_BUILD_FILE")
 	})
 
 	it.After(func() {
@@ -49,6 +50,12 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 	})
 
 	it("fails without build.gradle or build.gradle.kts", func() {
+		Expect(detect.Detect(ctx)).To(Equal(libcnb.DetectResult{}))
+	})
+
+	it("fails without configured build file", func() {
+		Expect(ioutil.WriteFile(filepath.Join(ctx.Application.Path, "build.gradle"), []byte{}, 0644))
+		os.Setenv("BP_GRADLE_BUILD_FILE", filepath.Join(ctx.Application.Path, "no-such-build.gradle"))
 		Expect(detect.Detect(ctx)).To(Equal(libcnb.DetectResult{}))
 	})
 
