@@ -23,6 +23,7 @@ The buildpack will do the following:
 | Environment Variable | Description
 | -------------------- | -----------
 | `$BP_GRADLE_BUILD_ARGUMENTS` | Configure the arguments to pass to build system.  Defaults to `--no-daemon assemble`.
+| `$BP_GRADLE_BUILD_FILE` | Configure the location of the build configuration file. If it doesn't exist this build pack will not be applied.  Defaults to `build.gradle`.
 | `$BP_GRADLE_BUILT_MODULE` | Configure the module to find application artifact in.  Defaults to the root module (empty).
 | `$BP_GRADLE_BUILT_ARTIFACT` | Configure the built application artifact explicitly.  Supersedes `$BP_GRADLE_BUILT_MODULE`  Defaults to `build/libs/*.[jw]ar`.
 
