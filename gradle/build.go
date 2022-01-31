@@ -44,7 +44,7 @@ type Build struct {
 
 type ApplicationFactory interface {
 	NewApplication(additionalMetadata map[string]interface{}, arguments []string, artifactResolver libbs.ArtifactResolver,
-		cache libbs.Cache, command string, bom *libcnb.BOM, applicationPath string, bomScanner sbom.SBOMScanner, buildpackAPI string) (libbs.Application, error)
+		cache libbs.Cache, command string, bom *libcnb.BOM, applicationPath string, bomScanner sbom.SBOMScanner) (libbs.Application, error)
 }
 
 type HomeDirectoryResolver interface {
@@ -92,9 +92,7 @@ func (b Build) Build(context libcnb.BuildContext) (libcnb.BuildResult, error) {
 		d, be := NewDistribution(dep, dc)
 		d.Logger = b.Logger
 		result.Layers = append(result.Layers, d)
-		if be.Name != "" {
-			result.BOM.Entries = append(result.BOM.Entries, be)
-		}
+		result.BOM.Entries = append(result.BOM.Entries, be)
 		command = filepath.Join(context.Layers.Path, d.Name(), "bin", "gradle")
 	} else if err != nil {
 		return libcnb.BuildResult{}, fmt.Errorf("unable to stat %s\n%w", command, err)
@@ -162,7 +160,6 @@ func (b Build) Build(context libcnb.BuildContext) (libcnb.BuildResult, error) {
 		result.BOM,
 		context.Application.Path,
 		bomScanner,
-		context.Buildpack.API,
 	)
 	if err != nil {
 		return libcnb.BuildResult{}, fmt.Errorf("unable to create application layer\n%w", err)
