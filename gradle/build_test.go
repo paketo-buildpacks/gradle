@@ -31,7 +31,7 @@ import (
 
 	"github.com/paketo-buildpacks/libbs"
 
-	"github.com/paketo-buildpacks/gradle/gradle"
+	"github.com/paketo-buildpacks/gradle/v6/gradle"
 )
 
 func testBuild(t *testing.T, context spec.G, it spec.S) {

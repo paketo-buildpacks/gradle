@@ -23,7 +23,7 @@ import (
 	"github.com/paketo-buildpacks/libpak"
 	"github.com/paketo-buildpacks/libpak/bard"
 
-	"github.com/paketo-buildpacks/gradle/gradle"
+	"github.com/paketo-buildpacks/gradle/v6/gradle"
 )
 
 func main() {
