@@ -17,6 +17,7 @@
 package gradle_test
 
 import (
+	"errors"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -38,9 +39,10 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 	var (
 		Expect = NewWithT(t).Expect
 
-		ctx         libcnb.BuildContext
-		gradleBuild gradle.Build
-		homeDir     string
+		ctx             libcnb.BuildContext
+		gradleBuild     gradle.Build
+		homeDir         string
+		gradlewFilepath string
 	)
 
 	it.Before(func() {
@@ -55,6 +57,8 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		homeDir, err = ioutil.TempDir("", "home-dir")
 		Expect(err).NotTo(HaveOccurred())
 
+		gradlewFilepath = filepath.Join(ctx.Application.Path, "gradlew")
+
 		gradleBuild = gradle.Build{
 			ApplicationFactory:    &FakeApplicationFactory{},
 			HomeDirectoryResolver: FakeHomeDirectoryResolver{path: homeDir},
@@ -68,20 +72,47 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 	})
 
 	it("does not contribute distribution if wrapper exists", func() {
-		Expect(ioutil.WriteFile(filepath.Join(ctx.Application.Path, "gradlew"), []byte{}, 0644)).To(Succeed())
+		Expect(ioutil.WriteFile(gradlewFilepath, []byte{}, 0644)).To(Succeed())
 		ctx.StackID = "test-stack-id"
 
 		result, err := gradleBuild.Build(ctx)
 		Expect(err).NotTo(HaveOccurred())
 
-		fi, err := os.Stat(filepath.Join(ctx.Application.Path, "gradlew"))
-		Expect(err).NotTo(HaveOccurred())
-		Expect(fi.Mode()).To(BeEquivalentTo(0755))
-
 		Expect(result.Layers).To(HaveLen(2))
 		Expect(result.Layers[0].Name()).To(Equal("cache"))
 		Expect(result.Layers[1].Name()).To(Equal("application"))
-		Expect(result.Layers[1].(libbs.Application).Command).To(Equal(filepath.Join(ctx.Application.Path, "gradlew")))
+		Expect(result.Layers[1].(libbs.Application).Command).To(Equal(gradlewFilepath))
+	})
+
+	it("makes sure that gradlew is executable", func() {
+		Expect(ioutil.WriteFile(gradlewFilepath, []byte{}, 0644)).To(Succeed())
+		ctx.StackID = "test-stack-id"
+
+		_, err := gradleBuild.Build(ctx)
+		Expect(err).NotTo(HaveOccurred())
+
+		fi, err := os.Stat(gradlewFilepath)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(fi.Mode()).To(BeEquivalentTo(0755))
+	})
+
+	it("proceeds without error if gradlew could not have been made executable", func() {
+		if _, err := os.Stat("/dev/null"); errors.Is(err, os.ErrNotExist) {
+			t.Skip("No /dev/null thus not a unix system. Skipping chmod test.")
+		}
+		Expect(os.Symlink("/dev/null", gradlewFilepath)).To(Succeed())
+		fi, err := os.Stat(gradlewFilepath)
+		Expect(err).NotTo(HaveOccurred())
+		originalMode := fi.Mode()
+		Expect(originalMode).ToNot(BeEquivalentTo(0755))
+		ctx.StackID = "test-stack-id"
+
+		_, err = gradleBuild.Build(ctx)
+		Expect(err).NotTo(HaveOccurred())
+
+		fi, err = os.Stat(gradlewFilepath)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(fi.Mode()).To(BeEquivalentTo(originalMode))
 	})
 
 	it("contributes distribution for API <=0.6", func() {
@@ -149,7 +180,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 			ctx.StackID = "test-stack-id"
 			ctx.Platform.Path, err = ioutil.TempDir("", "gradle-test-platform")
 			Expect(err).NotTo(HaveOccurred())
-			Expect(ioutil.WriteFile(filepath.Join(ctx.Application.Path, "gradlew"), []byte{}, 0644)).To(Succeed())
+			Expect(ioutil.WriteFile(gradlewFilepath, []byte{}, 0644)).To(Succeed())
 			bindingPath = filepath.Join(ctx.Platform.Path, "bindings", "some-gradle")
 			ctx.Platform.Bindings = libcnb.Bindings{
 				{
