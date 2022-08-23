@@ -55,14 +55,14 @@ api = "0.7"
     name = "BP_GRADLE_BUILT_MODULE"
 
   [[metadata.dependencies]]
-    cpes = ["cpe:2.3:a:gradle:gradle:7.5.0:*:*:*:*:*:*:*"]
+    cpes = ["cpe:2.3:a:gradle:gradle:7.5.1:*:*:*:*:*:*:*"]
     id = "gradle"
     name = "Gradle"
-    purl = "pkg:generic/gradle@7.5.0"
-    sha256 = "cb87f222c5585bd46838ad4db78463a5c5f3d336e5e2b98dc7c0c586527351c2"
+    purl = "pkg:generic/gradle@7.5.1"
+    sha256 = "f6b8596b10cce501591e92f229816aa4046424f3b24d771751b06779d58c8ec4"
     stacks = ["io.buildpacks.stacks.bionic", "io.paketo.stacks.tiny", "*"]
-    uri = "https://downloads.gradle.org/distributions/gradle-7.5-bin.zip"
-    version = "7.5.0"
+    uri = "https://downloads.gradle.org/distributions/gradle-7.5.1-bin.zip"
+    version = "7.5.1"
 
     [[metadata.dependencies.licenses]]
       type = "Apache-2.0"
