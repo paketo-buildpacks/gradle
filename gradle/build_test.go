@@ -172,6 +172,48 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		Expect(result.BOM.Entries[0].Launch).To(BeFalse())
 	})
 
+	context("BP_GRADLE_INIT_SCRIPT_PATH configuration is set", func() {
+		it.Before(func() {
+			ctx.Buildpack.Metadata = map[string]interface{}{
+				"configurations": []map[string]interface{}{
+					{"name": "BP_GRADLE_INIT_SCRIPT_PATH", "default": "/workspace/init.gradle"},
+				},
+			}
+		})
+
+		it("sets the settings path", func() {
+			Expect(ioutil.WriteFile(gradlewFilepath, []byte{}, 0644)).To(Succeed())
+
+			result, err := gradleBuild.Build(ctx)
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(result.Layers[1].(libbs.Application).Arguments).To(Equal([]string{
+				"--init-script", "/workspace/init.gradle",
+			}))
+		})
+	})
+
+	context("BP_GRADLE_INIT_SCRIPT_PATH env var is set", func() {
+		it.Before(func() {
+			Expect(os.Setenv("BP_GRADLE_INIT_SCRIPT_PATH", "/workspace/init.gradle")).To(Succeed())
+		})
+
+		it.After(func() {
+			Expect(os.Unsetenv(("BP_GRADLE_INIT_SCRIPT_PATH"))).To(Succeed())
+		})
+
+		it("sets the settings path", func() {
+			Expect(ioutil.WriteFile(gradlewFilepath, []byte{}, 0644)).To(Succeed())
+
+			result, err := gradleBuild.Build(ctx)
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(result.Layers[1].(libbs.Application).Arguments).To(Equal([]string{
+				"--init-script", "/workspace/init.gradle",
+			}))
+		})
+	})
+
 	context("gradle properties bindings exists", func() {
 		var bindingPath string
 
@@ -231,7 +273,7 @@ type FakeApplicationFactory struct{}
 
 func (f *FakeApplicationFactory) NewApplication(
 	additionalMetdata map[string]interface{},
-	_ []string,
+	args []string,
 	_ libbs.ArtifactResolver,
 	_ libbs.Cache,
 	command string,
@@ -247,6 +289,7 @@ func (f *FakeApplicationFactory) NewApplication(
 	return libbs.Application{
 		LayerContributor: contributor,
 		Command:          command,
+		Arguments:        args,
 	}, nil
 }
 

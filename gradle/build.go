@@ -116,6 +116,10 @@ func (b Build) Build(context libcnb.BuildContext) (libcnb.BuildResult, error) {
 	if err != nil {
 		return libcnb.BuildResult{}, fmt.Errorf("unable to resolve build arguments\n%w", err)
 	}
+	initScriptPath, _ := cr.Resolve("BP_GRADLE_INIT_SCRIPT_PATH")
+	if initScriptPath != "" {
+		args = append([]string{"--init-script", initScriptPath}, args...)
+	}
 
 	md := map[string]interface{}{}
 	if binding, ok, err := bindings.ResolveOne(context.Platform.Bindings, bindings.OfType("gradle")); err != nil {
@@ -150,7 +154,6 @@ func (b Build) Build(context libcnb.BuildContext) (libcnb.BuildResult, error) {
 	}
 
 	bomScanner := sbom.NewSyftCLISBOMScanner(context.Layers, effect.NewExecutor(), b.Logger)
-
 	a, err := b.ApplicationFactory.NewApplication(
 		md,
 		args,
