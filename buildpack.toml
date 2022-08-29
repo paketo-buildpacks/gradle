@@ -56,7 +56,7 @@ api = "0.7"
 
   [[metadata.configurations]]
     build = true
-    description = "the path to gradle init script file"
+    description = "the path to a Gradle init script file"
     name = "BP_GRADLE_INIT_SCRIPT_PATH"
 
   [[metadata.dependencies]]
