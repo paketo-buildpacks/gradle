@@ -32,6 +32,7 @@ The buildpack will do the following:
 | `$BP_GRADLE_BUILD_FILE`      | Configure the location of the build configuration file. If it doesn't exist this build pack will not be applied. Defaults to `build.gradle`.                                                                                         |
 | `$BP_GRADLE_BUILT_MODULE`    | Configure the module to find application artifact in. Defaults to the root module (empty).                                                                                                                                           |
 | `$BP_GRADLE_BUILT_ARTIFACT`  | Configure the built application artifact explicitly. Supersedes `$BP_GRADLE_BUILT_ARTIFACT`. Defaults to `build/libs/*.[jw]ar`. Can match a single file, multiple files or a directory. Can be one or more space separated patterns. |
+| `$BP_GRADLE_INIT_SCRIPT_PATH`  | Specifies a custom location to a Gradle init script, i.e. a `init.gradle` file. |
 
 ## Bindings
 
@@ -54,4 +55,3 @@ The buildpack optionally accepts the following bindings:
 This buildpack is released under version 2.0 of the [Apache License][a].
 
 [a]: http://www.apache.org/licenses/LICENSE-2.0
-

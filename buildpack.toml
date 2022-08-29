@@ -54,6 +54,11 @@ api = "0.7"
     description = "the module to find application artifact in"
     name = "BP_GRADLE_BUILT_MODULE"
 
+  [[metadata.configurations]]
+    build = true
+    description = "the path to a Gradle init script file"
+    name = "BP_GRADLE_INIT_SCRIPT_PATH"
+
   [[metadata.dependencies]]
     cpes = ["cpe:2.3:a:gradle:gradle:7.5.1:*:*:*:*:*:*:*"]
     id = "gradle"
