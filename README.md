@@ -1,6 +1,6 @@
 # `gcr.io/paketo-buildpacks/gradle`
 
-The Paketo Gradle Buildpack is a Cloud Native Buildpack that build Gradle-based applications from source.
+The Paketo Buildpack for Gradle is a Cloud Native Buildpack that build Gradle-based applications from source.
 
 ## Behavior
 

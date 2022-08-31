@@ -19,7 +19,7 @@ api = "0.7"
   homepage = "https://github.com/paketo-buildpacks/gradle"
   id = "paketo-buildpacks/gradle"
   keywords = ["java", "gradle", "build-systems"]
-  name = "Paketo Gradle Buildpack"
+  name = "Paketo Buildpack for Gradle"
   sbom-formats = ["application/vnd.cyclonedx+json", "application/vnd.syft+json"]
   version = "{{.version}}"
 
