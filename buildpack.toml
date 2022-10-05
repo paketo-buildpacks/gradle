@@ -59,6 +59,18 @@ api = "0.7"
     description = "the path to a Gradle init script file"
     name = "BP_GRADLE_INIT_SCRIPT_PATH"
 
+  [[metadata.configurations]]
+    build = true
+    default = ""
+    description = "colon separated list of glob patterns, matched source files are included"
+    name = "BP_INCLUDE_FILES"
+
+  [[metadata.configurations]]
+    build = true
+    default = ""
+    description = "colon separated list of glob patterns, matched source files are removed"
+    name = "BP_EXCLUDE_FILES"
+
   [[metadata.dependencies]]
     cpes = ["cpe:2.3:a:gradle:gradle:7.5.1:*:*:*:*:*:*:*"]
     id = "gradle"

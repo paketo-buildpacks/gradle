@@ -18,7 +18,7 @@ The buildpack will do the following:
 * If `<APPLICATION_ROOT>/gradlew` does not exist
   * Contributes Gradle to a layer with all commands on `$PATH`
   * Runs `<GRADLE_ROOT>/bin/gradle --no-daemon assemble` to build the application
-* Removes the source code in `<APPLICATION_ROOT>`
+* Removes the source code in `<APPLICATION_ROOT>`, following include/exclude rules
 * If `$BP_GRADLE_BUILT_ARTIFACT` matched a single file
   * Restores `$BP_GRADLE_BUILT_ARTIFACT` from the layer, expands the single file to `<APPLICATION_ROOT>`
 * If `$BP_GRADLE_BUILT_ARTIFACT` matched a directory or multiple files
@@ -33,6 +33,8 @@ The buildpack will do the following:
 | `$BP_GRADLE_BUILT_MODULE`    | Configure the module to find application artifact in. Defaults to the root module (empty).                                                                                                                                           |
 | `$BP_GRADLE_BUILT_ARTIFACT`  | Configure the built application artifact explicitly. Supersedes `$BP_GRADLE_BUILT_ARTIFACT`. Defaults to `build/libs/*.[jw]ar`. Can match a single file, multiple files or a directory. Can be one or more space separated patterns. |
 | `$BP_GRADLE_INIT_SCRIPT_PATH`  | Specifies a custom location to a Gradle init script, i.e. a `init.gradle` file. |
+| `$BP_INCLUDE_FILES`         | Colon separated list of glob patterns to match source files. Any matched file will be retained in the final image. Defaults to `` (i.e. nothing).                                                                                               |
+| `$BP_EXCLUDE_FILES`         | Colon separated list of glob patterns to match source files. Any matched file will be specifically removed from the final image. If include patterns are also specified, then they are applied first and exclude patterns can be used to further reduce the fileset. |
 
 ## Bindings
 
