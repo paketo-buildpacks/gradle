@@ -30,7 +30,7 @@ import (
 const (
 	PlanEntryGradle                = "gradle"
 	PlanEntryJVMApplicationPackage = "jvm-application-package"
-	PlaneEntryJDK                  = "jdk"
+	PlanEntryJDK                   = "jdk"
 	PlanEntrySyft                  = "syft"
 )
 
@@ -91,7 +91,7 @@ func (Detect) Detect(context libcnb.DetectContext) (libcnb.DetectResult, error) 
 					Requires: []libcnb.BuildPlanRequire{
 						{Name: PlanEntrySyft},
 						{Name: PlanEntryGradle},
-						{Name: PlaneEntryJDK},
+						{Name: PlanEntryJDK},
 					},
 				},
 			},
