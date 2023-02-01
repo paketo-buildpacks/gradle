@@ -9,7 +9,7 @@ codeowners:
 package:
   repositories:   ["docker.io/paketobuildpacks/gradle","gcr.io/paketo-buildpacks/gradle"]
   register:       true
-  registry_token: ${ secrets.PAKETO_BOT_GITHUB_TOKEN }
+  registry_token: ${{ secrets.PAKETO_BOT_GITHUB_TOKEN }}
 
 docker_credentials:
 - registry: gcr.io
