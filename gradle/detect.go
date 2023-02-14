@@ -18,13 +18,11 @@ package gradle
 
 import (
 	"fmt"
-	"io/ioutil"
-	"os"
-	"path/filepath"
-
 	"github.com/buildpacks/libcnb"
 	"github.com/paketo-buildpacks/libpak"
 	"github.com/paketo-buildpacks/libpak/bard"
+	"os"
+	"path/filepath"
 )
 
 const (
@@ -32,13 +30,16 @@ const (
 	PlanEntryJVMApplicationPackage = "jvm-application-package"
 	PlanEntryJDK                   = "jdk"
 	PlanEntrySyft                  = "syft"
+	PlanEntryYarn				   = "yarn"
+	PlanEntryNode				   = "node"
 )
 
 type Detect struct{}
 
 func (Detect) Detect(context libcnb.DetectContext) (libcnb.DetectResult, error) {
 
-	l := bard.NewLogger(ioutil.Discard)
+	result := libcnb.DetectResult{}
+	l := bard.NewLogger(os.Stdout)
 	cr, err := libpak.NewConfigurationResolver(context.Buildpack, &l)
 	if err != nil {
 		return libcnb.DetectResult{}, err
@@ -80,7 +81,7 @@ func (Detect) Detect(context libcnb.DetectContext) (libcnb.DetectResult, error) 
 			return libcnb.DetectResult{}, fmt.Errorf("unable to determine if %s exists\n%w", file, err)
 		}
 
-		return libcnb.DetectResult{
+		result = libcnb.DetectResult{
 			Pass: true,
 			Plans: []libcnb.BuildPlan{
 				{
@@ -95,7 +96,44 @@ func (Detect) Detect(context libcnb.DetectContext) (libcnb.DetectResult, error) 
 					},
 				},
 			},
-		}, nil
+		}
+	}
+	// Gradle's detection has passed
+	if len(result.Plans) > 0 {
+		if cr.ResolveBool("BP_JAVA_INSTALL_NODE") {
+			pathToSearch := context.Application.Path
+			files := []string{"yarn.lock", "package.json"}
+			var requireYarn, requireNode bool
+
+			if customNodePath, _ := cr.Resolve("BP_NODE_PROJECT_PATH"); customNodePath != "" {
+				pathToSearch = filepath.Join(context.Application.Path, customNodePath)
+			}
+			for _, file := range files {
+				_, err := os.Stat(filepath.Join(pathToSearch, file))
+				if os.IsNotExist(err) {
+					continue
+				} else if err != nil {
+					return libcnb.DetectResult{}, fmt.Errorf("unable to determine if file %s exists \n%w", file, err)
+				}
+				if file == "yarn.lock" {
+					requireYarn = true
+					break
+				}
+				if file == "package.json" {
+					requireNode = true
+				}
+			}
+			if requireYarn {
+				result.Plans[0].Requires = append(result.Plans[0].Requires, libcnb.BuildPlanRequire{Name: PlanEntryYarn, Metadata: map[string]interface{}{"build": true}})
+				result.Plans[0].Requires = append(result.Plans[0].Requires, libcnb.BuildPlanRequire{Name: PlanEntryNode, Metadata: map[string]interface{}{"build": true}})
+				return result, nil
+			} else if requireNode{
+				result.Plans[0].Requires = append(result.Plans[0].Requires, libcnb.BuildPlanRequire{Name: PlanEntryNode, Metadata: map[string]interface{}{"build": true}})
+				return result, nil
+			}
+			l.Infof("unable to find a yarn.lock or package.json file at %s", pathToSearch)
+		}
+		return result, nil
 	}
 
 	return libcnb.DetectResult{Pass: false}, nil
