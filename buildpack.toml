@@ -71,6 +71,12 @@ api = "0.7"
     description = "colon separated list of glob patterns, matched source files are removed"
     name = "BP_EXCLUDE_FILES"
 
+  [[metadata.configurations]]
+    build = true
+    default = ""
+    description = "path to Javascript package manager file, package.json or yarn.lock"
+    name = "BP_JS_PACKAGE_MANAGER_FILE"
+
   [[metadata.dependencies]]
     cpes = ["cpe:2.3:a:gradle:gradle:7.6.0:*:*:*:*:*:*:*"]
     id = "gradle"

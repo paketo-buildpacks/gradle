@@ -23,6 +23,9 @@ The buildpack will do the following:
   * Restores `$BP_GRADLE_BUILT_ARTIFACT` from the layer, expands the single file to `<APPLICATION_ROOT>`
 * If `$BP_GRADLE_BUILT_ARTIFACT` matched a directory or multiple files
   * Restores the files matched by `$BP_GRADLE_BUILT_ARTIFACT` to `<APPLICATION_ROOT>`
+* If `$BP_JS_PACKAGE_MANAGER_FILE` is set and 
+  * points to a `yarn.lock` file, the buildpack requests that `yarn` and `node` are installed at build time
+  * points to a `package.json` file, the buildpack requests that `node` is installed at build time
 
 ## Configuration
 
@@ -35,6 +38,7 @@ The buildpack will do the following:
 | `$BP_GRADLE_INIT_SCRIPT_PATH`  | Specifies a custom location to a Gradle init script, i.e. a `init.gradle` file. |
 | `$BP_INCLUDE_FILES`         | Colon separated list of glob patterns to match source files. Any matched file will be retained in the final image. Defaults to `` (i.e. nothing).                                                                                               |
 | `$BP_EXCLUDE_FILES`         | Colon separated list of glob patterns to match source files. Any matched file will be specifically removed from the final image. If include patterns are also specified, then they are applied first and exclude patterns can be used to further reduce the fileset. |
+| `$BP_JS_PACKAGE_MANAGER_FILE`    | Configure the path to either a `yarn.lock` file, which requires that `yarn` and `node` are installed by another buildpack, or a `package.json` file, which requires that `node` is installed by another buildpack. Defaults to `` (i.e. nothing).
 
 ## Bindings
 

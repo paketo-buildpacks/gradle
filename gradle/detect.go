@@ -18,13 +18,12 @@ package gradle
 
 import (
 	"fmt"
-	"io/ioutil"
-	"os"
-	"path/filepath"
-
 	"github.com/buildpacks/libcnb"
 	"github.com/paketo-buildpacks/libpak"
 	"github.com/paketo-buildpacks/libpak/bard"
+	"os"
+	"path/filepath"
+	"strings"
 )
 
 const (
@@ -32,13 +31,16 @@ const (
 	PlanEntryJVMApplicationPackage = "jvm-application-package"
 	PlanEntryJDK                   = "jdk"
 	PlanEntrySyft                  = "syft"
+	PlanEntryYarn				   = "yarn"
+	PlanEntryNode				   = "node"
 )
 
 type Detect struct{}
 
 func (Detect) Detect(context libcnb.DetectContext) (libcnb.DetectResult, error) {
 
-	l := bard.NewLogger(ioutil.Discard)
+	result := libcnb.DetectResult{}
+	l := bard.NewLogger(os.Stdout)
 	cr, err := libpak.NewConfigurationResolver(context.Buildpack, &l)
 	if err != nil {
 		return libcnb.DetectResult{}, err
@@ -80,7 +82,7 @@ func (Detect) Detect(context libcnb.DetectContext) (libcnb.DetectResult, error) 
 			return libcnb.DetectResult{}, fmt.Errorf("unable to determine if %s exists\n%w", file, err)
 		}
 
-		return libcnb.DetectResult{
+		result = libcnb.DetectResult{
 			Pass: true,
 			Plans: []libcnb.BuildPlan{
 				{
@@ -95,7 +97,28 @@ func (Detect) Detect(context libcnb.DetectContext) (libcnb.DetectResult, error) 
 					},
 				},
 			},
-		}, nil
+		}
+	}
+	// Gradle detection has passed
+	if len(result.Plans) > 0 {
+		jsFile, _ := cr.Resolve("BP_JS_PACKAGE_MANAGER_FILE")
+		if jsFile != "" {
+					file := filepath.Join(context.Application.Path, jsFile)
+					_, err := os.Stat(file)
+					if os.IsNotExist(err) {
+						l.Infof("unable to find package manager file %s, specified in BP_JS_PACKAGE_MANAGER_FILE", file)
+						return result, nil
+					} else if err != nil {
+						return libcnb.DetectResult{}, fmt.Errorf("unable to determine if file %s exists \n%w", file, err)
+					}
+					if strings.Contains(file, "yarn.lock") {
+						result.Plans[0].Requires = append(result.Plans[0].Requires, libcnb.BuildPlanRequire{Name: PlanEntryYarn, Metadata: map[string]interface{}{"build": true}})
+						result.Plans[0].Requires = append(result.Plans[0].Requires, libcnb.BuildPlanRequire{Name: PlanEntryNode, Metadata: map[string]interface{}{"build": true}})
+					} else if strings.Contains(file, "package.json") {
+						result.Plans[0].Requires = append(result.Plans[0].Requires, libcnb.BuildPlanRequire{Name: PlanEntryNode, Metadata: map[string]interface{}{"build": true}})
+					}
+		}
+		return result, nil
 	}
 
 	return libcnb.DetectResult{Pass: false}, nil
