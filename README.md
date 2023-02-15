@@ -41,7 +41,7 @@ The buildpack will do the following:
 | `$BP_JAVA_INSTALL_NODE`    | Configure whether to request that `yarn` and `node` are installed by another buildpack**. If set to `true`, the buildpack will check the app root or path set by `$BP_NODE_PROJECT_PATH` for either: A `yarn.lock` file, which requires that `yarn` and `node` are installed or, a `package.json` file, which requires that `node` is installed. Defaults to `false`
 
 ### Note
-** If the node and/or yarn requirements are met and the [Node Engine](https://github.com/paketo-buildpacks/node-engine) or [Yarn](https://github.com/paketo-buildpacks/yarn) participate in the build, environment variables related to these buildpacks can be set, such as `BP_NODE_PROJECT_PATH` - to specify a subdirectory in `<APPLICATION_ROOT>` to search for the above package-manager files. See the [docs](https://paketo.io/docs/howto/nodejs/) for more info. 
+** If the node and/or yarn requirements are met and the [Node Engine](https://github.com/paketo-buildpacks/node-engine) or [Yarn](https://github.com/paketo-buildpacks/yarn) participate in the build, environment variables related to these buildpacks can be set, such as `BP_NODE_PROJECT_PATH` or `BP_NODE_VERSION`. See the [Paketo Node.js docs](https://paketo.io/docs/howto/nodejs/) for more info.
 
 ## Bindings
 
