@@ -98,6 +98,7 @@ func (Detect) Detect(context libcnb.DetectContext) (libcnb.DetectResult, error) 
 	// Gradle's detection has passed
 	if len(result.Plans) > 0 {
 		if cr.ResolveBool("BP_JAVA_INSTALL_NODE") {
+			var fileFound bool
 			files := []string{filepath.Join(context.Application.Path, "yarn.lock"), filepath.Join(context.Application.Path,"package.json")}
 			if customNodePath, _ := cr.Resolve("BP_NODE_PROJECT_PATH"); customNodePath != "" {
 				files = []string{filepath.Join(context.Application.Path, customNodePath, "yarn.lock"), filepath.Join(context.Application.Path, customNodePath, "package.json")}
@@ -106,15 +107,19 @@ func (Detect) Detect(context libcnb.DetectContext) (libcnb.DetectResult, error) 
 				if strings.Contains(file,"yarn.lock") {
 					result.Plans[0].Requires = append(result.Plans[0].Requires, libcnb.BuildPlanRequire{Name: PlanEntryYarn, Metadata: map[string]interface{}{"build": true}})
 					result.Plans[0].Requires = append(result.Plans[0].Requires, libcnb.BuildPlanRequire{Name: PlanEntryNode, Metadata: map[string]interface{}{"build": true}})
+					fileFound = true
 					return true
 				} else if strings.Contains(file,"package.json") {
 					result.Plans[0].Requires = append(result.Plans[0].Requires, libcnb.BuildPlanRequire{Name: PlanEntryNode, Metadata: map[string]interface{}{"build": true}})
+					fileFound = true
 				}
 				return false
 			}); err != nil{
 				return libcnb.DetectResult{}, err
 			}
-			l.Infof("unable to find a yarn.lock or package.json file, you may need to set BP_NODE_PROJECT_PATH")
+			if !fileFound{
+				l.Infof("unable to find a yarn.lock or package.json file, you may need to set BP_NODE_PROJECT_PATH")
+			}
 		}
 		return result, nil
 	}
