@@ -23,6 +23,7 @@ import (
 	"github.com/paketo-buildpacks/libpak/bard"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 const (
@@ -40,7 +41,7 @@ func (Detect) Detect(context libcnb.DetectContext) (libcnb.DetectResult, error) 
 
 	result := libcnb.DetectResult{}
 	l := bard.NewLogger(os.Stdout)
-	cr, err := libpak.NewConfigurationResolver(context.Buildpack, &l)
+	cr, err := libpak.NewConfigurationResolver(context.Buildpack, nil)
 	if err != nil {
 		return libcnb.DetectResult{}, err
 	}
@@ -72,15 +73,7 @@ func (Detect) Detect(context libcnb.DetectContext) (libcnb.DetectResult, error) 
 			filepath.Join(context.Application.Path, "settings.gradle.kts"),
 		}
 	}
-
-	for _, file := range files {
-		_, err := os.Stat(file)
-		if os.IsNotExist(err) {
-			continue
-		} else if err != nil {
-			return libcnb.DetectResult{}, fmt.Errorf("unable to determine if %s exists\n%w", file, err)
-		}
-
+	if err := findFile(files, func(file string) bool{
 		result = libcnb.DetectResult{
 			Pass: true,
 			Plans: []libcnb.BuildPlan{
@@ -97,44 +90,48 @@ func (Detect) Detect(context libcnb.DetectContext) (libcnb.DetectResult, error) 
 				},
 			},
 		}
+		return true
+	}); err != nil{
+		return libcnb.DetectResult{}, err
 	}
+
 	// Gradle's detection has passed
 	if len(result.Plans) > 0 {
 		if cr.ResolveBool("BP_JAVA_INSTALL_NODE") {
-			pathToSearch := context.Application.Path
-			files := []string{"yarn.lock", "package.json"}
-			var requireYarn, requireNode bool
-
+			files := []string{filepath.Join(context.Application.Path, "yarn.lock"), filepath.Join(context.Application.Path,"package.json")}
 			if customNodePath, _ := cr.Resolve("BP_NODE_PROJECT_PATH"); customNodePath != "" {
-				pathToSearch = filepath.Join(context.Application.Path, customNodePath)
+				files = []string{filepath.Join(context.Application.Path, customNodePath, "yarn.lock"), filepath.Join(context.Application.Path, customNodePath, "package.json")}
 			}
-			for _, file := range files {
-				_, err := os.Stat(filepath.Join(pathToSearch, file))
-				if os.IsNotExist(err) {
-					continue
-				} else if err != nil {
-					return libcnb.DetectResult{}, fmt.Errorf("unable to determine if file %s exists \n%w", file, err)
+			if err := findFile(files, func (file string) bool{
+				if strings.Contains(file,"yarn.lock") {
+					result.Plans[0].Requires = append(result.Plans[0].Requires, libcnb.BuildPlanRequire{Name: PlanEntryYarn, Metadata: map[string]interface{}{"build": true}})
+					result.Plans[0].Requires = append(result.Plans[0].Requires, libcnb.BuildPlanRequire{Name: PlanEntryNode, Metadata: map[string]interface{}{"build": true}})
+					return true
+				} else if strings.Contains(file,"package.json") {
+					result.Plans[0].Requires = append(result.Plans[0].Requires, libcnb.BuildPlanRequire{Name: PlanEntryNode, Metadata: map[string]interface{}{"build": true}})
 				}
-				if file == "yarn.lock" {
-					requireYarn = true
-					break
-				}
-				if file == "package.json" {
-					requireNode = true
-				}
+				return false
+			}); err != nil{
+				return libcnb.DetectResult{}, err
 			}
-			if requireYarn {
-				result.Plans[0].Requires = append(result.Plans[0].Requires, libcnb.BuildPlanRequire{Name: PlanEntryYarn, Metadata: map[string]interface{}{"build": true}})
-				result.Plans[0].Requires = append(result.Plans[0].Requires, libcnb.BuildPlanRequire{Name: PlanEntryNode, Metadata: map[string]interface{}{"build": true}})
-				return result, nil
-			} else if requireNode{
-				result.Plans[0].Requires = append(result.Plans[0].Requires, libcnb.BuildPlanRequire{Name: PlanEntryNode, Metadata: map[string]interface{}{"build": true}})
-				return result, nil
-			}
-			l.Infof("unable to find a yarn.lock or package.json file at %s", pathToSearch)
+			l.Infof("unable to find a yarn.lock or package.json file, you may need to set BP_NODE_PROJECT_PATH")
 		}
 		return result, nil
 	}
-
 	return libcnb.DetectResult{Pass: false}, nil
+}
+
+func findFile (files []string, runWhenFound func(fileFound string) bool) error {
+	for _, file := range files {
+		_, err := os.Stat(file)
+		if os.IsNotExist(err) {
+			continue
+		} else if err != nil {
+			return fmt.Errorf("unable to determine if file %s exists \n%w", file, err)
+		}
+		if runWhenFound(file) {
+			break
+		}
+	}
+	return nil
 }

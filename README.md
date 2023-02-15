@@ -39,6 +39,8 @@ The buildpack will do the following:
 | `$BP_INCLUDE_FILES`         | Colon separated list of glob patterns to match source files. Any matched file will be retained in the final image. Defaults to `` (i.e. nothing).                                                                                               |
 | `$BP_EXCLUDE_FILES`         | Colon separated list of glob patterns to match source files. Any matched file will be specifically removed from the final image. If include patterns are also specified, then they are applied first and exclude patterns can be used to further reduce the fileset. |
 | `$BP_JAVA_INSTALL_NODE`    | Configure whether to request that `yarn` and `node` are installed by another buildpack**. If set to `true`, the buildpack will check the app root or path set by `$BP_NODE_PROJECT_PATH` for either: A `yarn.lock` file, which requires that `yarn` and `node` are installed or, a `package.json` file, which requires that `node` is installed. Defaults to `false`
+| `$BP_NODE_PROJECT_PATH`         | Configure a project subdirectory to look for `package.json` and `yarn.lock` files
+
 
 ### Note
 ** If the node and/or yarn requirements are met and the [Node Engine](https://github.com/paketo-buildpacks/node-engine) or [Yarn](https://github.com/paketo-buildpacks/yarn) participate in the build, environment variables related to these buildpacks can be set, such as `BP_NODE_PROJECT_PATH` or `BP_NODE_VERSION`. See the [Paketo Node.js docs](https://paketo.io/docs/howto/nodejs/) for more info.

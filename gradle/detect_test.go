@@ -60,9 +60,9 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 		Expect(detect.Detect(ctx)).To(Equal(libcnb.DetectResult{}))
 	})
 
-	it("gradle detection passes without configured javascript file", func() {
+	it("passes if no package-manager file is found", func() {
 		Expect(os.WriteFile(filepath.Join(ctx.Application.Path, "build.gradle"), []byte{}, 0644))
-		os.Setenv("BP_JS_PACKAGE_MANAGER_FILE", "no-such-javascript-file")
+		os.Setenv("BP_JAVA_INSTALL_NODE",  "true")
 
 		Expect(detect.Detect(ctx)).To(Equal(libcnb.DetectResult{
 			Pass: true,
