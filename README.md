@@ -23,7 +23,7 @@ The buildpack will do the following:
   * Restores `$BP_GRADLE_BUILT_ARTIFACT` from the layer, expands the single file to `<APPLICATION_ROOT>`
 * If `$BP_GRADLE_BUILT_ARTIFACT` matched a directory or multiple files
   * Restores the files matched by `$BP_GRADLE_BUILT_ARTIFACT` to `<APPLICATION_ROOT>`
-* If `$BP_JAVA_INSTALL_NODE` is set to true and the buildpack finds one of the following at `<APPLICATION_ROOT>`:
+* If `$BP_JAVA_INSTALL_NODE` is set to true and the buildpack finds one of the following at `<APPLICATION_ROOT>` or at the path set by `$BP_NODE_PROJECT_PATH`:
   * a `yarn.lock` file, the buildpack requests that `yarn` and `node` are installed at build time
   * a `package.json` file, the buildpack requests that `node` is installed at build time
 
