@@ -18,13 +18,12 @@ package gradle
 
 import (
 	"fmt"
-	"io/ioutil"
-	"os"
-	"path/filepath"
-
 	"github.com/buildpacks/libcnb"
 	"github.com/paketo-buildpacks/libpak"
 	"github.com/paketo-buildpacks/libpak/bard"
+	"os"
+	"path/filepath"
+	"strings"
 )
 
 const (
@@ -32,14 +31,17 @@ const (
 	PlanEntryJVMApplicationPackage = "jvm-application-package"
 	PlanEntryJDK                   = "jdk"
 	PlanEntrySyft                  = "syft"
+	PlanEntryYarn				   = "yarn"
+	PlanEntryNode				   = "node"
 )
 
 type Detect struct{}
 
 func (Detect) Detect(context libcnb.DetectContext) (libcnb.DetectResult, error) {
 
-	l := bard.NewLogger(ioutil.Discard)
-	cr, err := libpak.NewConfigurationResolver(context.Buildpack, &l)
+	result := libcnb.DetectResult{}
+	l := bard.NewLogger(os.Stdout)
+	cr, err := libpak.NewConfigurationResolver(context.Buildpack, nil)
 	if err != nil {
 		return libcnb.DetectResult{}, err
 	}
@@ -71,16 +73,8 @@ func (Detect) Detect(context libcnb.DetectContext) (libcnb.DetectResult, error) 
 			filepath.Join(context.Application.Path, "settings.gradle.kts"),
 		}
 	}
-
-	for _, file := range files {
-		_, err := os.Stat(file)
-		if os.IsNotExist(err) {
-			continue
-		} else if err != nil {
-			return libcnb.DetectResult{}, fmt.Errorf("unable to determine if %s exists\n%w", file, err)
-		}
-
-		return libcnb.DetectResult{
+	if err := findFile(files, func(file string) bool{
+		result = libcnb.DetectResult{
 			Pass: true,
 			Plans: []libcnb.BuildPlan{
 				{
@@ -95,8 +89,54 @@ func (Detect) Detect(context libcnb.DetectContext) (libcnb.DetectResult, error) 
 					},
 				},
 			},
-		}, nil
+		}
+		return true
+	}); err != nil{
+		return libcnb.DetectResult{}, err
 	}
 
+	// Gradle's detection has passed
+	if len(result.Plans) > 0 {
+		if cr.ResolveBool("BP_JAVA_INSTALL_NODE") {
+			var fileFound bool
+			files := []string{filepath.Join(context.Application.Path, "yarn.lock"), filepath.Join(context.Application.Path,"package.json")}
+			if customNodePath, _ := cr.Resolve("BP_NODE_PROJECT_PATH"); customNodePath != "" {
+				files = []string{filepath.Join(context.Application.Path, customNodePath, "yarn.lock"), filepath.Join(context.Application.Path, customNodePath, "package.json")}
+			}
+			if err := findFile(files, func (file string) bool{
+				if strings.Contains(file,"yarn.lock") {
+					result.Plans[0].Requires = append(result.Plans[0].Requires, libcnb.BuildPlanRequire{Name: PlanEntryYarn, Metadata: map[string]interface{}{"build": true}})
+					result.Plans[0].Requires = append(result.Plans[0].Requires, libcnb.BuildPlanRequire{Name: PlanEntryNode, Metadata: map[string]interface{}{"build": true}})
+					fileFound = true
+					return true
+				} else if strings.Contains(file,"package.json") {
+					result.Plans[0].Requires = append(result.Plans[0].Requires, libcnb.BuildPlanRequire{Name: PlanEntryNode, Metadata: map[string]interface{}{"build": true}})
+					fileFound = true
+				}
+				return false
+			}); err != nil{
+				return libcnb.DetectResult{}, err
+			}
+			if !fileFound{
+				l.Infof("unable to find a yarn.lock or package.json file, you may need to set BP_NODE_PROJECT_PATH")
+			}
+		}
+		return result, nil
+	}
 	return libcnb.DetectResult{Pass: false}, nil
+}
+
+func findFile (files []string, runWhenFound func(fileFound string) bool) error {
+	for _, file := range files {
+		_, err := os.Stat(file)
+		if os.IsNotExist(err) {
+			continue
+		} else if err != nil {
+			return fmt.Errorf("unable to determine if file %s exists \n%w", file, err)
+		}
+		if runWhenFound(file) {
+			break
+		}
+	}
+	return nil
 }
