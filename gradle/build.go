@@ -116,6 +116,14 @@ func (b Build) Build(context libcnb.BuildContext) (libcnb.BuildResult, error) {
 	if err != nil {
 		return libcnb.BuildResult{}, fmt.Errorf("unable to resolve build arguments\n%w", err)
 	}
+
+	additionalArgs, err := libbs.ResolveArguments("BP_GRADLE_ADDITIONAL_BUILD_ARGUMENTS", cr)
+	if err != nil {
+		return libcnb.BuildResult{}, fmt.Errorf("unable to resolve additional build arguments\n%w", err)
+	} else {
+		args = append(args, additionalArgs...)
+	}
+
 	initScriptPath, _ := cr.Resolve("BP_GRADLE_INIT_SCRIPT_PATH")
 	if initScriptPath != "" {
 		args = append([]string{"--init-script", initScriptPath}, args...)

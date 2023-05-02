@@ -214,6 +214,48 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		})
 	})
 
+	context("BP_GRADLE_BUILD_ARGUMENTS env var is set", func() {
+		it.Before(func() {
+			Expect(os.Setenv("BP_GRADLE_BUILD_ARGUMENTS", "--no-daemon assemble")).To(Succeed())
+		})
+
+		it.After(func() {
+			Expect(os.Unsetenv(("BP_GRADLE_BUILD_ARGUMENTS"))).To(Succeed())
+		})
+		it("sets some build arguments", func() {
+			Expect(ioutil.WriteFile(gradlewFilepath, []byte{}, 0644)).To(Succeed())
+
+			result, err := gradleBuild.Build(ctx)
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(result.Layers[1].(libbs.Application).Arguments).To(Equal([]string{
+				"--no-daemon", "assemble",
+			}))
+		})
+	})
+
+	context("BP_GRADLE_BUILD_ARGUMENTS and BP_GRADLE_ADDITIONAL_BUILD_ARGUMENTS  env var is set", func() {
+		it.Before(func() {
+			Expect(os.Setenv("BP_GRADLE_BUILD_ARGUMENTS", "--no-daemon assemble")).To(Succeed())
+			Expect(os.Setenv("BP_GRADLE_ADDITIONAL_BUILD_ARGUMENTS", "--no-build-cache")).To(Succeed())
+		})
+
+		it.After(func() {
+			Expect(os.Unsetenv(("BP_GRADLE_BUILD_ARGUMENTS"))).To(Succeed())
+			Expect(os.Unsetenv(("BP_GRADLE_ADDITIONAL_BUILD_ARGUMENTS"))).To(Succeed())
+		})
+		it("sets some build and additional build arguments", func() {
+			Expect(ioutil.WriteFile(gradlewFilepath, []byte{}, 0644)).To(Succeed())
+
+			result, err := gradleBuild.Build(ctx)
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(result.Layers[1].(libbs.Application).Arguments).To(Equal([]string{
+				"--no-daemon", "assemble", "--no-build-cache",
+			}))
+		})
+	})
+
 	context("gradle properties bindings exists", func() {
 		var bindingPath string
 
