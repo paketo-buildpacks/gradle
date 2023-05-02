@@ -37,6 +37,12 @@ api = "0.7"
     description = "the arguments to pass to Gradle"
     name = "BP_GRADLE_BUILD_ARGUMENTS"
 
+[[metadata.configurations]]
+    build = true
+    default = ""
+    description = "the additionnal arguments (appended to BP_GRADLE_BUILD_ARGUMENTS) to pass to Gradle"
+    name = "BP_GRADLE_ADDITIONAL_BUILD_ARGUMENTS"
+
   [[metadata.configurations]]
     build = true
     description = "the location of the main build config file, relative to the application root"
