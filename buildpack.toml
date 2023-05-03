@@ -37,7 +37,7 @@ api = "0.7"
     description = "the arguments to pass to Gradle"
     name = "BP_GRADLE_BUILD_ARGUMENTS"
 
-[[metadata.configurations]]
+  [[metadata.configurations]]
     build = true
     default = ""
     description = "the additionnal arguments (appended to BP_GRADLE_BUILD_ARGUMENTS) to pass to Gradle"
