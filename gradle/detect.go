@@ -31,8 +31,8 @@ const (
 	PlanEntryJVMApplicationPackage = "jvm-application-package"
 	PlanEntryJDK                   = "jdk"
 	PlanEntrySyft                  = "syft"
-	PlanEntryYarn				   = "yarn"
-	PlanEntryNode				   = "node"
+	PlanEntryYarn                  = "yarn"
+	PlanEntryNode                  = "node"
 )
 
 type Detect struct{}
@@ -41,7 +41,7 @@ func (Detect) Detect(context libcnb.DetectContext) (libcnb.DetectResult, error) 
 
 	result := libcnb.DetectResult{}
 	l := bard.NewLogger(os.Stdout)
-	cr, err := libpak.NewConfigurationResolver(context.Buildpack, nil)
+	cr, err := libpak.NewConfigurationResolver(context.Buildpack, &l)
 	if err != nil {
 		return libcnb.DetectResult{}, err
 	}
@@ -53,6 +53,7 @@ func (Detect) Detect(context libcnb.DetectContext) (libcnb.DetectResult, error) 
 		file := filepath.Join(context.Application.Path, buildFile)
 		_, err = os.Stat(file)
 		if os.IsNotExist(err) {
+			l.Logger.Infof("SKIPPED: BP_GRADLE_BUILD_FILE was specified but %s could not be found", file)
 			return libcnb.DetectResult{Pass: false}, nil
 		} else if err != nil {
 			return libcnb.DetectResult{}, fmt.Errorf("unable to determine if %s exists\n%w", file, err)
@@ -73,7 +74,7 @@ func (Detect) Detect(context libcnb.DetectContext) (libcnb.DetectResult, error) 
 			filepath.Join(context.Application.Path, "settings.gradle.kts"),
 		}
 	}
-	if err := findFile(files, func(file string) bool{
+	if err := findFile(files, func(file string) bool {
 		result = libcnb.DetectResult{
 			Pass: true,
 			Plans: []libcnb.BuildPlan{
@@ -91,7 +92,7 @@ func (Detect) Detect(context libcnb.DetectContext) (libcnb.DetectResult, error) 
 			},
 		}
 		return true
-	}); err != nil{
+	}); err != nil {
 		return libcnb.DetectResult{}, err
 	}
 
@@ -99,34 +100,35 @@ func (Detect) Detect(context libcnb.DetectContext) (libcnb.DetectResult, error) 
 	if len(result.Plans) > 0 {
 		if cr.ResolveBool("BP_JAVA_INSTALL_NODE") {
 			var fileFound bool
-			files := []string{filepath.Join(context.Application.Path, "yarn.lock"), filepath.Join(context.Application.Path,"package.json")}
+			files := []string{filepath.Join(context.Application.Path, "yarn.lock"), filepath.Join(context.Application.Path, "package.json")}
 			if customNodePath, _ := cr.Resolve("BP_NODE_PROJECT_PATH"); customNodePath != "" {
 				files = []string{filepath.Join(context.Application.Path, customNodePath, "yarn.lock"), filepath.Join(context.Application.Path, customNodePath, "package.json")}
 			}
-			if err := findFile(files, func (file string) bool{
-				if strings.Contains(file,"yarn.lock") {
+			if err := findFile(files, func(file string) bool {
+				if strings.Contains(file, "yarn.lock") {
 					result.Plans[0].Requires = append(result.Plans[0].Requires, libcnb.BuildPlanRequire{Name: PlanEntryYarn, Metadata: map[string]interface{}{"build": true}})
 					result.Plans[0].Requires = append(result.Plans[0].Requires, libcnb.BuildPlanRequire{Name: PlanEntryNode, Metadata: map[string]interface{}{"build": true}})
 					fileFound = true
 					return true
-				} else if strings.Contains(file,"package.json") {
+				} else if strings.Contains(file, "package.json") {
 					result.Plans[0].Requires = append(result.Plans[0].Requires, libcnb.BuildPlanRequire{Name: PlanEntryNode, Metadata: map[string]interface{}{"build": true}})
 					fileFound = true
 				}
 				return false
-			}); err != nil{
+			}); err != nil {
 				return libcnb.DetectResult{}, err
 			}
-			if !fileFound{
+			if !fileFound {
 				l.Infof("unable to find a yarn.lock or package.json file, you may need to set BP_NODE_PROJECT_PATH")
 			}
 		}
 		return result, nil
 	}
+	l.Logger.Info("SKIPPED: No plans could be resolved")
 	return libcnb.DetectResult{Pass: false}, nil
 }
 
-func findFile (files []string, runWhenFound func(fileFound string) bool) error {
+func findFile(files []string, runWhenFound func(fileFound string) bool) error {
 	for _, file := range files {
 		_, err := os.Stat(file)
 		if os.IsNotExist(err) {
