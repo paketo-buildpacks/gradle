@@ -33,7 +33,7 @@ api = "0.7"
 
   [[metadata.configurations]]
     build = true
-    default = "--no-daemon assemble"
+    default = "--no-daemon -Dorg.gradle.welcome=never assemble"
     description = "the arguments to pass to Gradle"
     name = "BP_GRADLE_BUILD_ARGUMENTS"
 

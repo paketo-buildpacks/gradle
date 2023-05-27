@@ -216,7 +216,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 
 	context("BP_GRADLE_BUILD_ARGUMENTS env var is set", func() {
 		it.Before(func() {
-			Expect(os.Setenv("BP_GRADLE_BUILD_ARGUMENTS", "--no-daemon assemble")).To(Succeed())
+			Expect(os.Setenv("BP_GRADLE_BUILD_ARGUMENTS", "--no-daemon -Dorg.gradle.welcome=never assemble")).To(Succeed())
 		})
 
 		it.After(func() {
@@ -229,7 +229,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(result.Layers[1].(libbs.Application).Arguments).To(Equal([]string{
-				"--no-daemon", "assemble",
+				"--no-daemon", "-Dorg.gradle.welcome=never", "assemble",
 			}))
 		})
 	})
