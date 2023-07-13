@@ -1,4 +1,4 @@
-module github.com/paketo-buildpacks/gradle/v6
+module github.com/paketo-buildpacks/gradle/v7
 
 go 1.20
 

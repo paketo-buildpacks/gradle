@@ -10,7 +10,7 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/sclevine/spec"
 
-	"github.com/paketo-buildpacks/gradle/v6/gradle"
+	"github.com/paketo-buildpacks/gradle/v7/gradle"
 )
 
 func testGradleProperties(t *testing.T, context spec.G, it spec.S) {

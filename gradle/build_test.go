@@ -32,7 +32,7 @@ import (
 
 	"github.com/paketo-buildpacks/libbs"
 
-	"github.com/paketo-buildpacks/gradle/v6/gradle"
+	"github.com/paketo-buildpacks/gradle/v7/gradle"
 )
 
 func testBuild(t *testing.T, context spec.G, it spec.S) {
