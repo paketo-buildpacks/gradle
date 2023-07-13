@@ -25,7 +25,7 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/sclevine/spec"
 
-	"github.com/paketo-buildpacks/gradle/v6/gradle"
+	"github.com/paketo-buildpacks/gradle/v7/gradle"
 )
 
 func testDetect(t *testing.T, context spec.G, it spec.S) {
@@ -62,7 +62,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 
 	it("passes if no package-manager file is found", func() {
 		Expect(os.WriteFile(filepath.Join(ctx.Application.Path, "build.gradle"), []byte{}, 0644))
-		os.Setenv("BP_JAVA_INSTALL_NODE",  "true")
+		os.Setenv("BP_JAVA_INSTALL_NODE", "true")
 
 		Expect(detect.Detect(ctx)).To(Equal(libcnb.DetectResult{
 			Pass: true,
@@ -169,7 +169,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 	it("passes with package.json", func() {
 		Expect(os.WriteFile(filepath.Join(ctx.Application.Path, "build.gradle"), []byte{}, 0644))
 		Expect(os.WriteFile(filepath.Join(ctx.Application.Path, "package.json"), []byte{}, 0644))
-		os.Setenv("BP_JAVA_INSTALL_NODE",  "true")
+		os.Setenv("BP_JAVA_INSTALL_NODE", "true")
 
 		Expect(detect.Detect(ctx)).To(Equal(libcnb.DetectResult{
 			Pass: true,
@@ -193,7 +193,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 	it("passes with yarn.lock", func() {
 		Expect(os.WriteFile(filepath.Join(ctx.Application.Path, "build.gradle"), []byte{}, 0644))
 		Expect(os.WriteFile(filepath.Join(ctx.Application.Path, "yarn.lock"), []byte{}, 0644))
-		os.Setenv("BP_JAVA_INSTALL_NODE",  "true")
+		os.Setenv("BP_JAVA_INSTALL_NODE", "true")
 
 		Expect(detect.Detect(ctx)).To(Equal(libcnb.DetectResult{
 			Pass: true,
@@ -219,7 +219,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 		Expect(os.WriteFile(filepath.Join(ctx.Application.Path, "build.gradle"), []byte{}, 0644))
 		Expect(os.WriteFile(filepath.Join(ctx.Application.Path, "yarn.lock"), []byte{}, 0644))
 		Expect(os.WriteFile(filepath.Join(ctx.Application.Path, "package.json"), []byte{}, 0644))
-		os.Setenv("BP_JAVA_INSTALL_NODE",  "true")
+		os.Setenv("BP_JAVA_INSTALL_NODE", "true")
 
 		Expect(detect.Detect(ctx)).To(Equal(libcnb.DetectResult{
 			Pass: true,
@@ -242,12 +242,11 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 	})
 
 	it("passes with custom path set via BP_NODE_PROJECT_PATH", func() {
-		os.Setenv("BP_NODE_PROJECT_PATH",  "frontend")
-		os.Setenv("BP_JAVA_INSTALL_NODE",  "true")
+		os.Setenv("BP_NODE_PROJECT_PATH", "frontend")
+		os.Setenv("BP_JAVA_INSTALL_NODE", "true")
 		os.Mkdir(filepath.Join(ctx.Application.Path, "frontend"), 0755)
 		Expect(os.WriteFile(filepath.Join(ctx.Application.Path, "build.gradle"), []byte{}, 0644))
 		Expect(os.WriteFile(filepath.Join(ctx.Application.Path, "frontend/yarn.lock"), []byte{}, 0644))
-
 
 		Expect(detect.Detect(ctx)).To(Equal(libcnb.DetectResult{
 			Pass: true,
