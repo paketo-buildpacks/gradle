@@ -1,7 +1,8 @@
 package gradle_test
 
 import (
-	"io/ioutil"
+	"github.com/magiconair/properties"
+	"github.com/paketo-buildpacks/libpak/sherpa"
 	"os"
 	"path/filepath"
 	"testing"
@@ -17,32 +18,37 @@ func testGradleProperties(t *testing.T, context spec.G, it spec.S) {
 	var (
 		Expect = NewWithT(t).Expect
 
-		ctx                   libcnb.BuildContext
-		gradleProps           gradle.PropertiesFile
-		gradleLayer           libcnb.Layer
-		gradleHome            string
-		gradleTargetPropsPath string
-		bindingPath           string
-		homeDir               string
+		ctx                          libcnb.BuildContext
+		gradleProps                  gradle.PropertiesFile
+		gradleLayer                  libcnb.Layer
+		gradleHome                   string
+		gradleWrapperHome            string
+		gradleWrapperTargetPropsPath string
+		gradleTargetPropsPath        string
+		bindingPath                  string
+		homeDir                      string
 	)
 
 	it.Before(func() {
 		var err error
 
-		ctx.Platform.Path, err = ioutil.TempDir("", "gradle-test-platform")
+		ctx.Platform.Path, err = os.MkdirTemp("", "gradle-test-platform")
 		Expect(err).NotTo(HaveOccurred())
 
-		ctx.Application.Path, err = ioutil.TempDir("", "build-application")
+		ctx.Application.Path, err = os.MkdirTemp("", "build-application")
 		Expect(err).NotTo(HaveOccurred())
 
-		ctx.Layers.Path, err = ioutil.TempDir("", "build-layers")
+		ctx.Layers.Path, err = os.MkdirTemp("", "build-layers")
 		Expect(err).NotTo(HaveOccurred())
 
-		homeDir, err = ioutil.TempDir("", "home-dir")
+		homeDir, err = os.MkdirTemp("", "home-dir")
 		Expect(err).NotTo(HaveOccurred())
 
 		gradleHome = filepath.Join(homeDir, ".gradle")
 		gradleTargetPropsPath = filepath.Join(gradleHome, "gradle.properties")
+
+		gradleWrapperHome = filepath.Join(ctx.Application.Path, "gradle", "wrapper")
+		gradleWrapperTargetPropsPath = filepath.Join(gradleWrapperHome, "gradle-wrapper.properties")
 	})
 
 	it.After(func() {
@@ -63,7 +69,7 @@ func testGradleProperties(t *testing.T, context spec.G, it spec.S) {
 		})
 	})
 
-	context("a binding is present", func() {
+	context("a gradle properties binding is present", func() {
 		it.Before(func() {
 			var err error
 
@@ -79,7 +85,7 @@ func testGradleProperties(t *testing.T, context spec.G, it spec.S) {
 			gradleSrcPropsPath, ok := ctx.Platform.Bindings[0].SecretFilePath("gradle.properties")
 			Expect(os.MkdirAll(filepath.Dir(gradleSrcPropsPath), 0777)).To(Succeed())
 			Expect(ok).To(BeTrue())
-			Expect(ioutil.WriteFile(
+			Expect(os.WriteFile(
 				gradleSrcPropsPath,
 				[]byte("gradle-properties-content"),
 				0644,
@@ -92,8 +98,10 @@ func testGradleProperties(t *testing.T, context spec.G, it spec.S) {
 			Expect(err).NotTo(HaveOccurred())
 
 			gradleProps = gradle.PropertiesFile{
-				Binding:    ctx.Platform.Bindings[0],
-				GradleHome: gradleHome,
+				Binding:                  ctx.Platform.Bindings[0],
+				GradlePropertiesHome:     gradleHome,
+				GradlePropertiesFileName: "gradle.properties",
+				GradlePropertiesName:     "gradle-properties",
 			}
 		})
 
@@ -110,7 +118,7 @@ func testGradleProperties(t *testing.T, context spec.G, it spec.S) {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(target).To(Equal(filepath.Join(bindingPath, "gradle.properties")))
 
-			data, err := ioutil.ReadFile(gradleTargetPropsPath)
+			data, err := os.ReadFile(gradleTargetPropsPath)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(string(data)).To(Equal("gradle-properties-content"))
 		})
@@ -134,10 +142,76 @@ func testGradleProperties(t *testing.T, context spec.G, it spec.S) {
 			// symlink should point to our binding, not /dev/null
 			Expect(target).To(Equal(filepath.Join(bindingPath, "gradle.properties")))
 
-			data, err := ioutil.ReadFile(gradleTargetPropsPath)
+			data, err := os.ReadFile(gradleTargetPropsPath)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(string(data)).To(Equal("gradle-properties-content"))
 		})
 
 	})
+
+	context("a gradle wrapper properties binding is present and contributes its content", func() {
+		it.Before(func() {
+			var err error
+
+			bindingPath = filepath.Join(ctx.Platform.Path, "bindings", "some-gradle")
+			ctx.Platform.Bindings = libcnb.Bindings{
+				{
+					Name: "some-gradle",
+					Type: "gradle-wrapper",
+					Secret: map[string]string{"gradle-wrapper.properties": `distributionUrl=https://g.o/gradle-7.5-bin.zip
+						 networkTimeout=43`},
+					Path: bindingPath,
+				},
+			}
+			Expect(os.MkdirAll(gradleWrapperHome, 0755)).ToNot(HaveOccurred())
+			gradleSrcPropsPath, ok := ctx.Platform.Bindings[0].SecretFilePath("gradle-wrapper.properties")
+			Expect(os.MkdirAll(filepath.Dir(gradleSrcPropsPath), 0777)).To(Succeed())
+			Expect(ok).To(BeTrue())
+
+			Expect(os.WriteFile(
+				gradleSrcPropsPath,
+				[]byte(`distributionUrl=https://g.o/gradle-7.5-bin.zip
+						 networkTimeout=43`),
+				0644,
+			)).To(Succeed())
+
+			originalGradleWrapperProperties, err := os.Open(filepath.Join("testdata", "gradle-wrapper.properties"))
+			Expect(err).NotTo(HaveOccurred())
+
+			err = sherpa.CopyFile(originalGradleWrapperProperties, gradleWrapperTargetPropsPath)
+			Expect(err).NotTo(HaveOccurred())
+
+			gradleLayer, err = ctx.Layers.Layer("gradle-wrapper-properties")
+			Expect(err).NotTo(HaveOccurred())
+
+			gradleProps = gradle.PropertiesFile{
+				Binding:                  ctx.Platform.Bindings[0],
+				GradlePropertiesHome:     gradleWrapperHome,
+				GradlePropertiesFileName: "gradle-wrapper.properties",
+				GradlePropertiesName:     "gradle-wrapper-properties",
+			}
+		})
+
+		it("merges gradle wrapper properties files", func() {
+			layer, err := gradleProps.Contribute(gradleLayer)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(layer).To(Equal(gradleLayer))
+
+			patchedProperties := properties.MustLoadFile(filepath.Join("testdata", "gradle-wrapper.properties"), properties.UTF8)
+			previousValue, ok, err := patchedProperties.Set("networkTimeout", "43")
+			Expect(err).NotTo(HaveOccurred())
+			Expect(previousValue).To(Equal("10000"))
+			Expect(ok).To(Equal(true))
+			previousValue, ok, err = patchedProperties.Set("distributionUrl", "https://g.o/gradle-7.5-bin.zip")
+			Expect(err).NotTo(HaveOccurred())
+			Expect(previousValue).To(Equal("https://services.gradle.org/distributions/gradle-7.6-bin.zip"))
+			Expect(ok).To(Equal(true))
+
+			finalProperties := properties.MustLoadFile(gradleWrapperTargetPropsPath, properties.UTF8)
+
+			Expect(finalProperties).To(Equal(patchedProperties))
+		})
+
+	})
+
 }
