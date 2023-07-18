@@ -26,7 +26,7 @@ func (p PropertiesFile) Contribute(layer libcnb.Layer) (libcnb.Layer, error) {
 
 	originalPropertiesFilePath := filepath.Join(p.GradlePropertiesHome, p.GradlePropertiesFileName)
 	if p.GradlePropertiesName == "gradle-properties" {
-		p.Logger.Body("symlinking gradle-properties bound file")
+		p.Logger.Debug("symlinking gradle-properties bound file")
 		gradlePropertiesPath := originalPropertiesFilePath
 		if err := os.Symlink(path, gradlePropertiesPath); os.IsExist(err) {
 			err = os.Remove(gradlePropertiesPath)
@@ -46,7 +46,7 @@ func (p PropertiesFile) Contribute(layer libcnb.Layer) (libcnb.Layer, error) {
 		if err != nil {
 			return libcnb.Layer{}, fmt.Errorf("unable to read bound gradle-wrapper.properties file at %s\n%w", path, err)
 		}
-		p.Logger.Bodyf("applying these bound gradle-wrapper-properties to default one: \n%s\n", string(file))
+		p.Logger.Debugf("applying these bound gradle-wrapper-properties to default one: \n%s\n", string(file))
 		mergedProperties := properties.MustLoadFiles([]string{originalPropertiesFilePath, path}, properties.UTF8, true)
 		propertiesFile, err := os.Create(originalPropertiesFilePath)
 		if err != nil {

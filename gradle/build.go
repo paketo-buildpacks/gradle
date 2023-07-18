@@ -133,7 +133,7 @@ func (b Build) Build(context libcnb.BuildContext) (libcnb.BuildResult, error) {
 	if binding, ok, err := bindings.ResolveOne(context.Platform.Bindings, bindings.OfType("gradle")); err != nil {
 		return libcnb.BuildResult{}, fmt.Errorf("unable to resolve binding\n%w", err)
 	} else if ok {
-		b.Logger.Body("binding of type gradle successfully detected, configuring layer")
+		b.Logger.Debug("binding of type gradle successfully detected, configuring layer")
 		gradlePropertiesPath, ok := binding.SecretFilePath("gradle.properties")
 		if ok {
 			gradlePropertiesFile, err := os.Open(gradlePropertiesPath)
@@ -161,7 +161,7 @@ func (b Build) Build(context libcnb.BuildContext) (libcnb.BuildResult, error) {
 	if binding, ok, err := bindings.ResolveOne(context.Platform.Bindings, bindings.OfType("gradle-wrapper")); err != nil {
 		return libcnb.BuildResult{}, fmt.Errorf("unable to resolve binding\n%w", err)
 	} else if ok {
-		b.Logger.Body("binding of type gradle-wrapper successfully detected, configuring layer")
+		b.Logger.Debug("binding of type gradle-wrapper successfully detected, configuring layer")
 		gradleWrapperPropertiesPath, ok := binding.SecretFilePath("gradle-wrapper.properties")
 		if ok {
 			gradleWrapperPropertiesFile, err := os.Open(gradleWrapperPropertiesPath)
