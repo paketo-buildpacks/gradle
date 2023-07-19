@@ -133,6 +133,7 @@ func (b Build) Build(context libcnb.BuildContext) (libcnb.BuildResult, error) {
 	if binding, ok, err := bindings.ResolveOne(context.Platform.Bindings, bindings.OfType("gradle")); err != nil {
 		return libcnb.BuildResult{}, fmt.Errorf("unable to resolve binding\n%w", err)
 	} else if ok {
+		b.Logger.Debug("binding of type gradle successfully detected, configuring layer")
 		gradlePropertiesPath, ok := binding.SecretFilePath("gradle.properties")
 		if ok {
 			gradlePropertiesFile, err := os.Open(gradlePropertiesPath)
@@ -149,6 +150,37 @@ func (b Build) Build(context libcnb.BuildContext) (libcnb.BuildResult, error) {
 			result.Layers = append(result.Layers, PropertiesFile{
 				binding,
 				gradleHome,
+				"gradle.properties",
+				"gradle-properties",
+				b.Logger,
+			})
+		}
+	}
+
+	gradleWrapperHome := filepath.Join("gradle", "wrapper")
+	if binding, ok, err := bindings.ResolveOne(context.Platform.Bindings, bindings.OfType("gradle-wrapper")); err != nil {
+		return libcnb.BuildResult{}, fmt.Errorf("unable to resolve binding\n%w", err)
+	} else if ok {
+		b.Logger.Debug("binding of type gradle-wrapper successfully detected, configuring layer")
+		gradleWrapperPropertiesPath, ok := binding.SecretFilePath("gradle-wrapper.properties")
+		if ok {
+			gradleWrapperPropertiesFile, err := os.Open(gradleWrapperPropertiesPath)
+			if err != nil {
+				return libcnb.BuildResult{}, fmt.Errorf("unable to open gradle-wrapper.properties\n%w", err)
+			}
+
+			hasher := sha256.New()
+			if _, err := io.Copy(hasher, gradleWrapperPropertiesFile); err != nil {
+				return libcnb.BuildResult{}, fmt.Errorf("unable to hash gradle-wrapper.properties\n%w", err)
+			}
+			md["gradle-wrapper-properties-sha256"] = hex.EncodeToString(hasher.Sum(nil))
+
+			result.Layers = append(result.Layers, PropertiesFile{
+				binding,
+				gradleWrapperHome,
+				"gradle-wrapper.properties",
+				"gradle-wrapper-properties",
+				b.Logger,
 			})
 		}
 	}

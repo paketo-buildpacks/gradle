@@ -55,6 +55,13 @@ The buildpack optionally accepts the following bindings:
 | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `gradle.properties` | If present, the contents of the file are copied to `$GRADLE_USER_HOME/gradle.properties` which is [picked up by gradle and merged](https://docs.gradle.org/current/userguide/build_environment.html#sec:gradle_configuration_properties) when it runs. |
 
+### Type: `gradle-wrapper`
+
+| Secret                      | Description                                                                                                                                                                                                                                                                  |
+|-----------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `gradle-wrapper.properties` | If present, the values of the properties file override the default ones found at <APPLICATION_ROOT>/gradle/wrapper/gradle-wrapper.properties which is [picked up by the gradle wrapper](https://docs.gradle.org/current/userguide/gradle_wrapper.html#customizing_wrapper).  |
+
+
 ### Type: `dependency-mapping`
 
 | Key                   | Value   | Description                                                                                       |

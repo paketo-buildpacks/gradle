@@ -18,7 +18,6 @@ package gradle_test
 
 import (
 	"errors"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -48,13 +47,13 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 	it.Before(func() {
 		var err error
 
-		ctx.Application.Path, err = ioutil.TempDir("", "build-application")
+		ctx.Application.Path, err = os.MkdirTemp("", "build-application")
 		Expect(err).NotTo(HaveOccurred())
 
-		ctx.Layers.Path, err = ioutil.TempDir("", "build-layers")
+		ctx.Layers.Path, err = os.MkdirTemp("", "build-layers")
 		Expect(err).NotTo(HaveOccurred())
 
-		homeDir, err = ioutil.TempDir("", "home-dir")
+		homeDir, err = os.MkdirTemp("", "home-dir")
 		Expect(err).NotTo(HaveOccurred())
 
 		gradlewFilepath = filepath.Join(ctx.Application.Path, "gradlew")
@@ -72,7 +71,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 	})
 
 	it("does not contribute distribution if wrapper exists", func() {
-		Expect(ioutil.WriteFile(gradlewFilepath, []byte{}, 0644)).To(Succeed())
+		Expect(os.WriteFile(gradlewFilepath, []byte{}, 0644)).To(Succeed())
 		ctx.StackID = "test-stack-id"
 
 		result, err := gradleBuild.Build(ctx)
@@ -85,7 +84,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 	})
 
 	it("makes sure that gradlew is executable", func() {
-		Expect(ioutil.WriteFile(gradlewFilepath, []byte{}, 0644)).To(Succeed())
+		Expect(os.WriteFile(gradlewFilepath, []byte{}, 0644)).To(Succeed())
 		ctx.StackID = "test-stack-id"
 
 		_, err := gradleBuild.Build(ctx)
@@ -182,7 +181,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		})
 
 		it("sets the settings path", func() {
-			Expect(ioutil.WriteFile(gradlewFilepath, []byte{}, 0644)).To(Succeed())
+			Expect(os.WriteFile(gradlewFilepath, []byte{}, 0644)).To(Succeed())
 
 			result, err := gradleBuild.Build(ctx)
 			Expect(err).NotTo(HaveOccurred())
@@ -203,7 +202,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		})
 
 		it("sets the settings path", func() {
-			Expect(ioutil.WriteFile(gradlewFilepath, []byte{}, 0644)).To(Succeed())
+			Expect(os.WriteFile(gradlewFilepath, []byte{}, 0644)).To(Succeed())
 
 			result, err := gradleBuild.Build(ctx)
 			Expect(err).NotTo(HaveOccurred())
@@ -223,7 +222,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 			Expect(os.Unsetenv(("BP_GRADLE_BUILD_ARGUMENTS"))).To(Succeed())
 		})
 		it("sets some build arguments", func() {
-			Expect(ioutil.WriteFile(gradlewFilepath, []byte{}, 0644)).To(Succeed())
+			Expect(os.WriteFile(gradlewFilepath, []byte{}, 0644)).To(Succeed())
 
 			result, err := gradleBuild.Build(ctx)
 			Expect(err).NotTo(HaveOccurred())
@@ -245,7 +244,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 			Expect(os.Unsetenv(("BP_GRADLE_ADDITIONAL_BUILD_ARGUMENTS"))).To(Succeed())
 		})
 		it("sets some build and additional build arguments", func() {
-			Expect(ioutil.WriteFile(gradlewFilepath, []byte{}, 0644)).To(Succeed())
+			Expect(os.WriteFile(gradlewFilepath, []byte{}, 0644)).To(Succeed())
 
 			result, err := gradleBuild.Build(ctx)
 			Expect(err).NotTo(HaveOccurred())
@@ -262,9 +261,9 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		it.Before(func() {
 			var err error
 			ctx.StackID = "test-stack-id"
-			ctx.Platform.Path, err = ioutil.TempDir("", "gradle-test-platform")
+			ctx.Platform.Path, err = os.MkdirTemp("", "gradle-test-platform")
 			Expect(err).NotTo(HaveOccurred())
-			Expect(ioutil.WriteFile(gradlewFilepath, []byte{}, 0644)).To(Succeed())
+			Expect(os.WriteFile(gradlewFilepath, []byte{}, 0644)).To(Succeed())
 			bindingPath = filepath.Join(ctx.Platform.Path, "bindings", "some-gradle")
 			ctx.Platform.Bindings = libcnb.Bindings{
 				{
@@ -277,7 +276,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 			gradlePropertiesPath, ok := ctx.Platform.Bindings[0].SecretFilePath("gradle.properties")
 			Expect(os.MkdirAll(filepath.Dir(gradlePropertiesPath), 0777)).To(Succeed())
 			Expect(ok).To(BeTrue())
-			Expect(ioutil.WriteFile(
+			Expect(os.WriteFile(
 				gradlePropertiesPath,
 				[]byte("gradle-properties-content"),
 				0644,
@@ -309,6 +308,61 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 			Expect(mdMap["gradle-properties-sha256"]).To(Equal(expected))
 		})
 	})
+
+	context("gradle wrapper properties binding exists", func() {
+		var bindingPath string
+
+		it.Before(func() {
+			var err error
+			ctx.StackID = "test-stack-id"
+			ctx.Platform.Path, err = os.MkdirTemp("", "gradle-test-platform")
+			Expect(err).NotTo(HaveOccurred())
+			Expect(os.WriteFile(gradlewFilepath, []byte{}, 0644)).To(Succeed())
+			bindingPath = filepath.Join(ctx.Platform.Path, "bindings", "some-gradle")
+			ctx.Platform.Bindings = libcnb.Bindings{
+				{
+					Name:   "some-gradle",
+					Type:   "gradle-wrapper",
+					Secret: map[string]string{"gradle-wrapper.properties": "gradle-wrapper-properties-content"},
+					Path:   bindingPath,
+				},
+			}
+			gradlePropertiesPath, ok := ctx.Platform.Bindings[0].SecretFilePath("gradle-wrapper.properties")
+			Expect(os.MkdirAll(filepath.Dir(gradlePropertiesPath), 0777)).To(Succeed())
+			Expect(ok).To(BeTrue())
+			Expect(os.WriteFile(
+				gradlePropertiesPath,
+				[]byte("gradle-wrapper-properties-content"),
+				0644,
+			)).To(Succeed())
+		})
+
+		it.After(func() {
+			Expect(os.RemoveAll(ctx.Platform.Path)).To(Succeed())
+		})
+
+		it("contributes bound gradle-wrapper.properties", func() {
+			result, err := gradleBuild.Build(ctx)
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(result.Layers).To(HaveLen(3))
+			Expect(result.Layers[1].Name()).To(Equal("gradle-wrapper-properties"))
+			Expect(result.Layers[1])
+		})
+
+		it("adds the hash of gradle-wrapper.properties to the layer metadata", func() {
+			result, err := gradleBuild.Build(ctx)
+			Expect(err).NotTo(HaveOccurred())
+
+			md := result.Layers[2].(libbs.Application).LayerContributor.ExpectedMetadata
+			mdMap, ok := md.(map[string]interface{})
+			Expect(ok).To(BeTrue())
+			// expected: sha256 of the string "gradle-wrapper-properties-content"
+			expected := "8d98502ceb9504c887b12cfba9427c5338d133a2f10613cb0137695ca09c7ddc"
+			Expect(mdMap["gradle-wrapper-properties-sha256"]).To(Equal(expected))
+		})
+	})
+
 }
 
 type FakeApplicationFactory struct{}
