@@ -4,7 +4,8 @@ go 1.20
 
 require (
 	github.com/buildpacks/libcnb v1.29.0
-	github.com/onsi/gomega v1.27.8
+	github.com/magiconair/properties v1.8.7
+	github.com/onsi/gomega v1.27.9
 	github.com/paketo-buildpacks/libbs v1.18.1
 	github.com/paketo-buildpacks/libpak v1.66.1
 	github.com/sclevine/spec v1.4.0
@@ -18,7 +19,6 @@ require (
 	github.com/h2non/filetype v1.1.3 // indirect
 	github.com/heroku/color v0.0.6 // indirect
 	github.com/imdario/mergo v0.3.16 // indirect
-	github.com/magiconair/properties v1.8.7 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.19 // indirect
 	github.com/mattn/go-shellwords v1.0.12 // indirect
