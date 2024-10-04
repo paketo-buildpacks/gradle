@@ -62,6 +62,8 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 			ApplicationFactory:    &FakeApplicationFactory{},
 			HomeDirectoryResolver: FakeHomeDirectoryResolver{path: homeDir},
 		}
+
+		t.Setenv("BP_ARCH", "amd64")
 	})
 
 	it.After(func() {

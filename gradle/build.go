@@ -193,7 +193,7 @@ func (b Build) Build(context libcnb.BuildContext) (libcnb.BuildResult, error) {
 		AdditionalHelpMessage:    "If this is unexpected, please try setting `rootProject.name` in `settings.gradle` or add a project.toml file and exclude the `build/` directory. For details see https://buildpacks.io/docs/app-developer-guide/using-project-descriptor/.",
 	}
 
-	bomScanner := sbom.NewSyftCLISBOMScanner(context.Layers, effect.NewExecutor(), b.Logger)
+	bomScanner := sbom.NewSyftCLISBOMScanner(context.Layers, effect.CommandExecutor{}, b.Logger)
 	a, err := b.ApplicationFactory.NewApplication(
 		md,
 		args,
