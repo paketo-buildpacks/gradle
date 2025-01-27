@@ -90,16 +90,16 @@ api = "0.7"
     name = "BP_NODE_PROJECT_PATH"
 
   [[metadata.dependencies]]
-    cpes = ["cpe:2.3:a:gradle:gradle:8.12.0:*:*:*:*:*:*:*"]
+    cpes = ["cpe:2.3:a:gradle:gradle:8.12.1:*:*:*:*:*:*:*"]
     id = "gradle"
     name = "Gradle"
-    purl = "pkg:generic/gradle@8.12.0"
-    sha256 = "7a00d51fb93147819aab76024feece20b6b84e420694101f276be952e08bef03"
-    source = "https://downloads.gradle.org/distributions/gradle-8.12-src.zip"
-    source-sha256 = "ab815839bf92def809efce22b6a8f62599798ae86e468e23373404abc235ccbf"
+    purl = "pkg:generic/gradle@8.12.1"
+    sha256 = "8d97a97984f6cbd2b85fe4c60a743440a347544bf18818048e611f5288d46c94"
+    source = "https://downloads.gradle.org/distributions/gradle-8.12.1-src.zip"
+    source-sha256 = "80180b0fb5acc159a9f6c6177c3d41ff6865d3ec92159517cd06b65f947b99fe"
     stacks = ["io.buildpacks.stacks.bionic", "io.paketo.stacks.tiny", "*"]
-    uri = "https://downloads.gradle.org/distributions/gradle-8.12-bin.zip"
-    version = "8.12.0"
+    uri = "https://downloads.gradle.org/distributions/gradle-8.12.1-bin.zip"
+    version = "8.12.1"
 
     [[metadata.dependencies.licenses]]
       type = "Apache-2.0"
