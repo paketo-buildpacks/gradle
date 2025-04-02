@@ -1,4 +1,7 @@
-# `gcr.io/paketo-buildpacks/gradle`
+# Paketo Buildpack for Gradle
+
+## Buildpack ID: `paketo-buildpacks/gradle`
+## Registry URLs: `docker.io/paketobuildpacks/gradle`
 
 The Paketo Buildpack for Gradle is a Cloud Native Buildpack that build Gradle-based applications from source.
 
