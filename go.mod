@@ -25,7 +25,7 @@ require (
 	github.com/mattn/go-shellwords v1.0.13 // indirect
 	github.com/mitchellh/hashstructure/v2 v2.0.2 // indirect
 	github.com/paketo-buildpacks/libjvm v1.46.0 // indirect
-	github.com/paketo-buildpacks/source-removal v1.0.29 // indirect
+	github.com/paketo-buildpacks/source-removal v1.0.30 // indirect
 	github.com/pavlo-v-chernykh/keystore-go/v4 v4.5.0 // indirect
 	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
